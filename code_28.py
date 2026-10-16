@@ -178,7 +178,7 @@ def draw_utility_icons(c, width, height):
         ("web_cal", "https://calendar.google.com/"), 
         ("app_cal", "calshow://"),                     
         ("mail", "mailto:"),                       
-        ("tasks", "x-apple-reminder://")             
+        ("tasks", "reminders://")            
     ]
     
     DARK_BROWN = HexColor("#433D34")
