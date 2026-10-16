@@ -21,7 +21,7 @@ BOX_BG_COLOR = HexColor("#FCFAF5")
 # Настройки вкладок
 TOP_TABS = ["HOME", "GUIDE", "YEAR", "BRAIN DUMP", "DONE LIST", "FOCUS LOG", "HABITS", "WEEKLY RESET", "MONEY", "WIN JAR", "VISION", "STICKERS"]
 RIGHT_TABS = ["2028", "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
-
+PLANNER_NAME = "MindFlow"
 YEAR = 2028
 
 # --- РЕГИСТРАЦИЯ ШРИФТОВ ---
@@ -237,20 +237,21 @@ def draw_base_page(c, width, height, active_top="", active_right="", page_name="
 
 
 # --- СТРАНИЦЫ ---
-def create_cover(c, width, height):
-    c.bookmarkPage("COVER")
-    c.setFillColor(ACCENT_PINK)
+def create_cover(c, width, height, bg_col, accent_col, text_col):
+    c.setFillColor(accent_col)
     c.rect(0, 0, width * 0.35, height, fill=1, stroke=0)
-    c.setFillColor(BG_COLOR)
+    c.setFillColor(bg_col)
     c.rect(width * 0.35, 0, width * 0.65, height, fill=1, stroke=0)
     
     center_x = width * 0.35 + (width * 0.65) / 2
-    c.setFillColor(DARK_BROWN)
+    c.setFillColor(text_col)
     
     c.setFont("Montserrat-Bold", 10)
     c.drawCentredString(center_x, height - 60 * mm, "A LOW-OVERWHELM PLANNER")
+    
+    # Используем глобальную переменную для названия
     c.setFont("Playfair-Bold", 48)
-    c.drawCentredString(center_x, height - 80 * mm, "EasyFocus")
+    c.drawCentredString(center_x, height - 80 * mm, PLANNER_NAME)
     
     c.setFont("Montserrat", 12)
     c.drawCentredString(center_x, height - 95 * mm, "Built for brains that don't do rigid schedules. Year, month,")
@@ -260,16 +261,23 @@ def create_cover(c, width, height):
     c.setFont("Montserrat-Bold", 14)
     c.drawCentredString(center_x, height - 130 * mm, str(YEAR))
     c.setFont("Montserrat-Bold", 8)
-    c.drawCentredString(center_x, height - 138 * mm, "SOFT PASTEL - GOODNOTES / NOTABILITY")
+    c.drawCentredString(center_x, height - 138 * mm, "GOODNOTES / NOTABILITY TEMPLATE")
     
     btn_w = 80 * mm if width < 250 * mm else 120 * mm
     btn_h = 12 * mm
     btn_x = center_x - (btn_w / 2)
     btn_y = height - 160 * mm
     
-    c.setFillColor(DARK_BROWN)
-    c.roundRect(btn_x, btn_y, btn_w, btn_h, 4, fill=1, stroke=0)
-    c.setFillColor(TAB_TEXT_ACTIVE)
+    # Умная кнопка: если фон темный, кнопка белая, и наоборот
+    if text_col == HexColor("#FFFFFF"):
+        c.setFillColor(HexColor("#FFFFFF"))
+        c.roundRect(btn_x, btn_y, btn_w, btn_h, 4, fill=1, stroke=0)
+        c.setFillColor(DARK_BROWN)
+    else:
+        c.setFillColor(DARK_BROWN)
+        c.roundRect(btn_x, btn_y, btn_w, btn_h, 4, fill=1, stroke=0)
+        c.setFillColor(HexColor("#FFFFFF"))
+        
     c.setFont("Montserrat-Bold", 10)
     c.drawCentredString(center_x, btn_y + 4 * mm, "Enter Planner →")
     c.linkAbsolute("HOME", "HOME", (btn_x, btn_y, btn_x + btn_w, btn_y + btn_h))
@@ -284,7 +292,7 @@ def create_home_page(c, width, height, is_landscape):
     
     # Заголовок страницы
     c.setFillColor(DARK_BROWN)
-    title_str = "WELCOME TO EASYFOCUS"
+    title_str = f"WELCOME TO {PLANNER_NAME.upper()}"
     c.setFont("Playfair-Bold", 24)
     c.drawString(margin_x, content_y, title_str)
     
@@ -2748,8 +2756,22 @@ def build_planner(filename, is_landscape=True, sunday_start=False):
     width, height = landscape(A4) if is_landscape else portrait(A4)
     c = canvas.Canvas(filename, pagesize=(width, height))
     
-    # 1. ВСТУПЛЕНИЕ
-    create_cover(c, width, height)
+    # 1. ВСТУПЛЕНИЕ И ОБЛОЖКИ (6 вариантов)
+    # Формат палитры: (Основной фон, Левая панель, Цвет текста)
+    cover_palettes = [
+        (BG_COLOR, ACCENT_PINK, DARK_BROWN),                                 # 1. Оригинальная (Светлая овсянка)
+        (HexColor("#3D405B"), HexColor("#2F3247"), HexColor("#FFFFFF")),     # 2. Deep Navy (Темно-синяя)
+        (HexColor("#81B29A"), HexColor("#6B9982"), HexColor("#FFFFFF")),     # 3. Sage Green (Шалфей)
+        (HexColor("#E07A5F"), HexColor("#C7664D"), HexColor("#FFFFFF")),     # 4. Terracotta (Терракота)
+        (HexColor("#F2CC8F"), HexColor("#E0BC84"), DARK_BROWN),              # 5. Mustard (Горчичная)
+        (HexColor("#E5B299"), HexColor("#D4A58E"), DARK_BROWN),              # 6. Blush Rose (Пыльная роза)
+    ]
+    
+    for i, (bg, acc, txt) in enumerate(cover_palettes):
+        if i == 0:
+            c.bookmarkPage("COVER") # Закладка ставится только на самую первую обложку
+        create_cover(c, width, height, bg, acc, txt)
+        
     create_home_page(c, width, height, is_landscape)
     
     # 2. ГЛОБАЛЬНЫЕ СТРАНИЦЫ
@@ -2801,10 +2823,10 @@ def build_planner(filename, is_landscape=True, sunday_start=False):
 
 if __name__ == "__main__":
     # Версии с Понедельника (MONDAY START)
-    build_planner("EasyFocus_Horizontal_MonStart_2028.pdf", is_landscape=True, sunday_start=False)
-    build_planner("EasyFocus_Vertical_MonStart_2028.pdf", is_landscape=False, sunday_start=False)
+    build_planner("MindFlow_Horizontal_MonStart_2028.pdf", is_landscape=True, sunday_start=False)
+    build_planner("MindFlow_Vertical_MonStart_2028.pdf", is_landscape=False, sunday_start=False)
     
     # Версии с Воскресенья (SUNDAY START)
-    build_planner("EasyFocus_Horizontal_SunStart_2028.pdf", is_landscape=True, sunday_start=True)
-    build_planner("EasyFocus_Vertical_SunStart_2028.pdf", is_landscape=False, sunday_start=True)
+    build_planner("MindFlow_Horizontal_SunStart_2028.pdf", is_landscape=True, sunday_start=True)
+    build_planner("MindFlow_Vertical_SunStart_2028.pdf", is_landscape=False, sunday_start=True)
 
