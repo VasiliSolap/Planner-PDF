@@ -33,7 +33,6 @@ THEMES = {
     }
 }
 
-# Инициализируем переменные заглушками (они перезапишутся перед стартом)
 BG_COLOR = HexColor("#FFFFFF")
 ACCENT_PINK = HexColor("#FFFFFF")
 ACCENT_GREEN = HexColor("#FFFFFF")
@@ -43,7 +42,6 @@ TAB_TEXT_ACTIVE = HexColor("#FFFFFF")
 BOX_BG_COLOR = HexColor("#FFFFFF")
 
 def apply_theme(theme_name):
-    """Меняет глобальные переменные цветов перед генерацией."""
     global BG_COLOR, ACCENT_PINK, ACCENT_GREEN, DARK_BROWN, TAB_BG_ACTIVE, TAB_TEXT_ACTIVE, BOX_BG_COLOR
     t = THEMES[theme_name]
     BG_COLOR = HexColor(t["bg"])
@@ -53,6 +51,7 @@ def apply_theme(theme_name):
     TAB_BG_ACTIVE = HexColor(t["tab_bg"])
     TAB_TEXT_ACTIVE = HexColor(t["tab_text"])
     BOX_BG_COLOR = HexColor(t["box_bg"])
+
 
 
 # Настройки вкладок
@@ -274,7 +273,31 @@ def draw_base_page(c, width, height, active_top="", active_right="", page_name="
 
 
 # --- СТРАНИЦЫ ---
-def create_cover(c, width, height, bg_col, accent_col, text_col):
+def create_cover(c, width, height, bg_col, accent_col, text_col, is_leather=False, leather_img=None):
+    import os
+    
+    if is_leather and leather_img and os.path.exists(leather_img):
+        try:
+            c.drawImage(leather_img, 0, 0, width, height)
+            
+            btn_w, btn_h = 50 * mm, 8 * mm
+            btn_x, btn_y = (width - btn_w) / 2, 25 * mm
+            
+            c.setFillColor(HexColor("#000000"))
+            c.setFillAlpha(0.15)
+            c.roundRect(btn_x, btn_y, btn_w, btn_h, 4, fill=1, stroke=0)
+            c.setFillAlpha(1.0)
+            
+            c.setFillColor(HexColor("#FFFFFF"))
+            c.setFont("Montserrat-Bold", 7)
+            c.drawCentredString(width / 2, btn_y + 2.5 * mm, "Enter Planner →")
+            
+            c.linkAbsolute("HOME", "HOME", (0, 0, width, height))
+            c.showPage()
+            return
+        except Exception as e:
+            print(f"Ошибка загрузки обложки {leather_img}: {e}")
+
     c.setFillColor(accent_col)
     c.rect(0, 0, width * 0.35, height, fill=1, stroke=0)
     c.setFillColor(bg_col)
@@ -282,14 +305,10 @@ def create_cover(c, width, height, bg_col, accent_col, text_col):
     
     center_x = width * 0.35 + (width * 0.65) / 2
     c.setFillColor(text_col)
-    
     c.setFont("Montserrat-Bold", 10)
     c.drawCentredString(center_x, height - 60 * mm, "A LOW-OVERWHELM PLANNER")
-    
-    # Используем глобальную переменную для названия
     c.setFont("Playfair-Bold", 48)
     c.drawCentredString(center_x, height - 80 * mm, PLANNER_NAME)
-    
     c.setFont("Montserrat", 12)
     c.drawCentredString(center_x, height - 95 * mm, "Built for brains that don't do rigid schedules. Year, month,")
     c.drawCentredString(center_x, height - 102 * mm, "week and day all link together — so you're never stuck")
@@ -302,10 +321,8 @@ def create_cover(c, width, height, bg_col, accent_col, text_col):
     
     btn_w = 80 * mm if width < 250 * mm else 120 * mm
     btn_h = 12 * mm
-    btn_x = center_x - (btn_w / 2)
-    btn_y = height - 160 * mm
+    btn_x, btn_y = center_x - (btn_w / 2), height - 160 * mm
     
-    # Умная кнопка: если фон темный, кнопка белая, и наоборот
     if text_col == HexColor("#FFFFFF"):
         c.setFillColor(HexColor("#FFFFFF"))
         c.roundRect(btn_x, btn_y, btn_w, btn_h, 4, fill=1, stroke=0)
@@ -319,6 +336,7 @@ def create_cover(c, width, height, bg_col, accent_col, text_col):
     c.drawCentredString(center_x, btn_y + 4 * mm, "Enter Planner →")
     c.linkAbsolute("HOME", "HOME", (btn_x, btn_y, btn_x + btn_w, btn_y + btn_h))
     c.showPage()
+
 
 def create_home_page(c, width, height, is_landscape):
     draw_base_page(c, width, height, active_top="HOME", page_name="HOME")
@@ -2790,27 +2808,34 @@ def create_win_jar_page(c, width, height, is_landscape):
 
 
 def build_planner(filename, is_landscape=True, sunday_start=False):
+    import os
     width, height = landscape(A4) if is_landscape else portrait(A4)
     c = canvas.Canvas(filename, pagesize=(width, height))
     
-    # 1. ВСТУПЛЕНИЕ И ОБЛОЖКИ (6 вариантов)
-    # Формат палитры: (Основной фон, Левая панель, Цвет текста)
     cover_palettes = [
-        (BG_COLOR, ACCENT_PINK, DARK_BROWN),                                 # 1. Оригинальная (Светлая овсянка)
-        (HexColor("#3D405B"), HexColor("#2F3247"), HexColor("#FFFFFF")),     # 2. Deep Navy (Темно-синяя)
-        (HexColor("#81B29A"), HexColor("#6B9982"), HexColor("#FFFFFF")),     # 3. Sage Green (Шалфей)
-        (HexColor("#E07A5F"), HexColor("#C7664D"), HexColor("#FFFFFF")),     # 4. Terracotta (Терракота)
-        (HexColor("#F2CC8F"), HexColor("#E0BC84"), DARK_BROWN),              # 5. Mustard (Горчичная)
-        (HexColor("#E5B299"), HexColor("#D4A58E"), DARK_BROWN),              # 6. Blush Rose (Пыльная роза)
+        (BG_COLOR, ACCENT_PINK, DARK_BROWN, False, None),                                 
+        (HexColor("#3D405B"), HexColor("#2F3247"), HexColor("#FFFFFF"), False, None),     
+        (HexColor("#81B29A"), HexColor("#6B9982"), HexColor("#FFFFFF"), False, None),     
+        
+        (HexColor("#6B4423"), HexColor("#F9F6F0"), HexColor("#3E2723"), True, "bordo"),
+        (HexColor("#4A3018"), HexColor("#F9F6F0"), HexColor("#3E2723"), True, "brown"),
+        (HexColor("#1A1A1A"), HexColor("#F9F6F0"), HexColor("#1A1A1A"), True, "black"),
+        (HexColor("#D5CABD"), HexColor("#F9F6F0"), HexColor("#5C544D"), True, "beige"),
     ]
     
-    for i, (bg, acc, txt) in enumerate(cover_palettes):
+    for i, (bg, acc, txt, is_leather, base_name) in enumerate(cover_palettes):
         if i == 0:
-            c.bookmarkPage("COVER") # Закладка ставится только на самую первую обложку
-        create_cover(c, width, height, bg, acc, txt)
+            c.bookmarkPage("COVER") 
+            
+        img_path = None
+        if is_leather and base_name:
+            orientation = "h" if is_landscape else "v"
+            img_path = os.path.join("covers", f"cover_{base_name}_{orientation}_{YEAR}.png")
+            
+        create_cover(c, width, height, bg, acc, txt, is_leather, img_path)
         
     create_home_page(c, width, height, is_landscape)
-    
+
     # 2. ГЛОБАЛЬНЫЕ СТРАНИЦЫ
     create_year_page(c, width, height, is_landscape, sunday_start) 
     create_brain_dump_page(c, width, height, is_landscape)
@@ -2859,28 +2884,23 @@ def build_planner(filename, is_landscape=True, sunday_start=False):
 
 
 if __name__ == "__main__":
-    # Импортируем модуль для создания папок (если их нет)
     import os
     
     for theme_name in THEMES.keys():
         print(f"\n=== Стартуем генерацию темы: {theme_name.upper()} ===")
         apply_theme(theme_name)
         
-        # Создаем папку для темы, чтобы файлы не перемешались
         if not os.path.exists(theme_name):
             os.makedirs(theme_name)
             
-        # Версии с Понедельника (MONDAY START)
-        f_horiz_mon = os.path.join(theme_name, f"{PLANNER_NAME}_{theme_name}_Landscape_Mon_2028.pdf")
-        f_vert_mon = os.path.join(theme_name, f"{PLANNER_NAME}_{theme_name}_Portrait_Mon_2028.pdf")
+        f_horiz_mon = os.path.join(theme_name, f"{PLANNER_NAME}_{theme_name}_Landscape_Mon_{YEAR}.pdf")
+        f_vert_mon = os.path.join(theme_name, f"{PLANNER_NAME}_{theme_name}_Portrait_Mon_{YEAR}.pdf")
         build_planner(f_horiz_mon, is_landscape=True, sunday_start=False)
         build_planner(f_vert_mon, is_landscape=False, sunday_start=False)
         
-        # Версии с Воскресенья (SUNDAY START)
-        f_horiz_sun = os.path.join(theme_name, f"{PLANNER_NAME}_{theme_name}_Landscape_Sun_2028.pdf")
-        f_vert_sun = os.path.join(theme_name, f"{PLANNER_NAME}_{theme_name}_Portrait_Sun_2028.pdf")
+        f_horiz_sun = os.path.join(theme_name, f"{PLANNER_NAME}_{theme_name}_Landscape_Sun_{YEAR}.pdf")
+        f_vert_sun = os.path.join(theme_name, f"{PLANNER_NAME}_{theme_name}_Portrait_Sun_{YEAR}.pdf")
         build_planner(f_horiz_sun, is_landscape=True, sunday_start=True)
         build_planner(f_vert_sun, is_landscape=False, sunday_start=True)
         
-    print("\n✅ Все 20 файлов успешно сгенерированы и разложены по папкам!")
-
+    print("\n✅ Все файлы успешно сгенерированы!")
