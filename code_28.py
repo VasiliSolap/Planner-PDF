@@ -9,14 +9,51 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
 
-# Цветовая палитра
-BG_COLOR = HexColor("#F6F2EB")
-ACCENT_PINK = HexColor("#F1E4DC")
-ACCENT_GREEN = HexColor("#E2EBE5")
-DARK_BROWN = HexColor("#433D34")
-TAB_BG_ACTIVE = HexColor("#433D34")
+# --- ЦВЕТОВЫЕ ТЕМЫ ---
+THEMES = {
+    "Vanilla": {
+        "bg": "#F9F6F0", "accent1": "#D5CABD", "accent2": "#E8E2D9",
+        "text": "#5C544D", "tab_bg": "#5C544D", "tab_text": "#FFFFFF", "box_bg": "#FFFFFF"
+    },
+    "Matcha": {
+        "bg": "#F4F7F4", "accent1": "#A3B19B", "accent2": "#C5D1BF",
+        "text": "#4A5346", "tab_bg": "#4A5346", "tab_text": "#FFFFFF", "box_bg": "#FFFFFF"
+    },
+    "Midnight": {
+        "bg": "#1C1C1E", "accent1": "#2C2C2E", "accent2": "#3A3A3C",
+        "text": "#E5E5EA", "tab_bg": "#E5E5EA", "tab_text": "#1C1C1E", "box_bg": "#2C2C2E"
+    },
+    "Lavender": {
+        "bg": "#F8F6FA", "accent1": "#C8B8D1", "accent2": "#E2D8E8",
+        "text": "#4A3F54", "tab_bg": "#4A3F54", "tab_text": "#FFFFFF", "box_bg": "#FFFFFF"
+    },
+    "Coastal": {
+        "bg": "#F0F4F8", "accent1": "#9FB3C8", "accent2": "#C4D4E3",
+        "text": "#2B3A4A", "tab_bg": "#2B3A4A", "tab_text": "#FFFFFF", "box_bg": "#FFFFFF"
+    }
+}
+
+# Инициализируем переменные заглушками (они перезапишутся перед стартом)
+BG_COLOR = HexColor("#FFFFFF")
+ACCENT_PINK = HexColor("#FFFFFF")
+ACCENT_GREEN = HexColor("#FFFFFF")
+DARK_BROWN = HexColor("#FFFFFF")
+TAB_BG_ACTIVE = HexColor("#FFFFFF")
 TAB_TEXT_ACTIVE = HexColor("#FFFFFF")
-BOX_BG_COLOR = HexColor("#FCFAF5")
+BOX_BG_COLOR = HexColor("#FFFFFF")
+
+def apply_theme(theme_name):
+    """Меняет глобальные переменные цветов перед генерацией."""
+    global BG_COLOR, ACCENT_PINK, ACCENT_GREEN, DARK_BROWN, TAB_BG_ACTIVE, TAB_TEXT_ACTIVE, BOX_BG_COLOR
+    t = THEMES[theme_name]
+    BG_COLOR = HexColor(t["bg"])
+    ACCENT_PINK = HexColor(t["accent1"])
+    ACCENT_GREEN = HexColor(t["accent2"])
+    DARK_BROWN = HexColor(t["text"])
+    TAB_BG_ACTIVE = HexColor(t["tab_bg"])
+    TAB_TEXT_ACTIVE = HexColor(t["tab_text"])
+    BOX_BG_COLOR = HexColor(t["box_bg"])
+
 
 # Настройки вкладок
 TOP_TABS = ["HOME", "GUIDE", "YEAR", "BRAIN DUMP", "DONE LIST", "FOCUS LOG", "HABITS", "WEEKLY RESET", "MONEY", "WIN JAR", "VISION", "STICKERS"]
@@ -1043,7 +1080,7 @@ def create_stickers_page(c, width, height, is_landscape):
     B_NAVY = HexColor("#3D405B")
     B_SAND = HexColor("#F4F1DE")
     SHADOW_C = HexColor("#E3DFD5")
-    WHITE = HexColor("#FFFFFF")
+    WHITE = BOX_BG_COLOR
     palette = [B_TERRA, B_SAGE, B_MUSTARD, B_BLUSH, B_NAVY, B_SAND]
 
     def dl_link(f_key):
@@ -2822,11 +2859,28 @@ def build_planner(filename, is_landscape=True, sunday_start=False):
 
 
 if __name__ == "__main__":
-    # Версии с Понедельника (MONDAY START)
-    build_planner("MindFlow_Horizontal_MonStart_2028.pdf", is_landscape=True, sunday_start=False)
-    build_planner("MindFlow_Vertical_MonStart_2028.pdf", is_landscape=False, sunday_start=False)
+    # Импортируем модуль для создания папок (если их нет)
+    import os
     
-    # Версии с Воскресенья (SUNDAY START)
-    build_planner("MindFlow_Horizontal_SunStart_2028.pdf", is_landscape=True, sunday_start=True)
-    build_planner("MindFlow_Vertical_SunStart_2028.pdf", is_landscape=False, sunday_start=True)
+    for theme_name in THEMES.keys():
+        print(f"\n=== Стартуем генерацию темы: {theme_name.upper()} ===")
+        apply_theme(theme_name)
+        
+        # Создаем папку для темы, чтобы файлы не перемешались
+        if not os.path.exists(theme_name):
+            os.makedirs(theme_name)
+            
+        # Версии с Понедельника (MONDAY START)
+        f_horiz_mon = os.path.join(theme_name, f"{PLANNER_NAME}_{theme_name}_Landscape_Mon_2028.pdf")
+        f_vert_mon = os.path.join(theme_name, f"{PLANNER_NAME}_{theme_name}_Portrait_Mon_2028.pdf")
+        build_planner(f_horiz_mon, is_landscape=True, sunday_start=False)
+        build_planner(f_vert_mon, is_landscape=False, sunday_start=False)
+        
+        # Версии с Воскресенья (SUNDAY START)
+        f_horiz_sun = os.path.join(theme_name, f"{PLANNER_NAME}_{theme_name}_Landscape_Sun_2028.pdf")
+        f_vert_sun = os.path.join(theme_name, f"{PLANNER_NAME}_{theme_name}_Portrait_Sun_2028.pdf")
+        build_planner(f_horiz_sun, is_landscape=True, sunday_start=True)
+        build_planner(f_vert_sun, is_landscape=False, sunday_start=True)
+        
+    print("\n✅ Все 20 файлов успешно сгенерированы и разложены по папкам!")
 
