@@ -6,6 +6,32 @@ from reportlab.lib.pagesizes import landscape, A4
 from reportlab.lib.colors import HexColor
 from reportlab.lib.units import mm
 from reportlab.lib.utils import ImageReader
+import os
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+
+# Проверяем и регистрируем шрифты явно
+font_paths = {
+    'Montserrat': 'fonts/Montserrat-Regular.ttf',
+    'Montserrat-Bold': 'fonts/Montserrat-Bold.ttf',
+    'Playfair-Bold': 'fonts/PlayfairDisplay-Bold.ttf'
+}
+
+for font_name, path in font_paths.items():
+    if os.path.exists(path):
+        pdfmetrics.registerFont(TTFont(font_name, path))
+        print(f"Шрифт успешно зарегистрирован: {font_name} ({path})")
+    else:
+        # Если файл не найден в папке fonts/, пробуем искать в корне проекта
+        root_path = os.path.basename(path)
+        if os.path.exists(root_path):
+            pdfmetrics.registerFont(TTFont(font_name, root_path))
+            print(f"Шрифт успешно зарегистрирован из корня: {font_name} ({root_path})")
+        else:
+            print(f"❌ ОШИБКА: Не найден файл шрифта для {font_name} по пути '{path}'!")
+
+
+
 
 try:
     from PIL import Image
@@ -62,7 +88,7 @@ def draw_top_category_tabs(c, width, height, active_tab=""):
     tab_width = available_width / len(CATEGORIES)
     radius = 2 * mm
 
-    c.setFont(""Montserrat-Bold", 7)
+    c.setFont("Montserrat-Bold", 7)
     for i, (tab_id, _, _, _) in enumerate(CATEGORIES):
         x = margin_x + i * tab_width
         y = margin_y
@@ -168,9 +194,11 @@ def build_sticker_book(output_filename="EasyFocus_Sticker_Book_1000.pdf"):
     center_x = width * 0.35 + (width * 0.65) / 2
     c.setFillColor(DARK_BROWN)
     c.setFont("Montserrat-Bold", 10)
-    c.drawCentredString(center_x, height - 60 * mm, "COMPANION DIGITAL STICKER BOOK")
+    c.drawCentredString(center_x, height - 60 * mm, "MINDFLOW COMPANION STICKER BOOK")
+    
     c.setFont("Playfair-Bold", 44)
-    c.drawCentredString(center_x, height - 80 * mm, "1000+ Sticker Pack")
+    c.drawCentredString(center_x, height - 80 * mm, "1000+ Aesthetic Stickers")
+    
     c.setFont("Montserrat", 12)
     c.drawCentredString(center_x, height - 96 * mm, "7 Curated Collections: Functional, Boho, Botanical, Cozy,")
     c.drawCentredString(center_x, height - 103 * mm, "Food, Meaningful & Animals. Optimized for GoodNotes & Notability.")
@@ -184,6 +212,7 @@ def build_sticker_book(output_filename="EasyFocus_Sticker_Book_1000.pdf"):
     c.drawCentredString(center_x, btn_y + 4 * mm, "Open Sticker Index →")
     c.linkAbsolute("CAT_INDEX", "CAT_INDEX", (btn_x, btn_y, btn_x + btn_w, btn_y + btn_h))
     c.showPage()
+
 
     # ================= 2. ОГЛАВЛЕНИЕ (INDEX) =================
     c.bookmarkPage("CAT_INDEX")

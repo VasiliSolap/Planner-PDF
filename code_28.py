@@ -56,7 +56,7 @@ def apply_theme(theme_name):
 
 # Настройки вкладок
 TOP_TABS = ["HOME", "GUIDE", "YEAR", "BRAIN DUMP", "DONE LIST", "FOCUS LOG", "HABITS", "WEEKLY RESET", "MONEY", "WIN JAR", "VISION", "STICKERS"]
-RIGHT_TABS = ["2028", "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+RIGHT_TABS = ["", "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 PLANNER_NAME = "MindFlow"
 YEAR = 2028
 
@@ -119,12 +119,13 @@ def draw_right_tabs(c, width, height, active_month="", active_top=""):
     tab_width = 10 * mm
     x = width - tab_width  
     
-    tab_height = (height - 25 * mm) / len(RIGHT_TABS)
+    months_only = RIGHT_TABS[1:]  # Берем строго 12 месяцев (JAN..DEC)
+    tab_height = (height - 25 * mm) / len(months_only)
     radius = 2 * mm
     
     c.setFont("Montserrat-Bold", 6)
     
-    for i, tab in enumerate(RIGHT_TABS):
+    for i, tab in enumerate(months_only):
         y = height - 25 * mm - (i + 1) * tab_height
         
         if tab == active_month:
@@ -132,7 +133,8 @@ def draw_right_tabs(c, width, height, active_month="", active_top=""):
             draw_folder_tab_bg(c, x, y, tab_width, tab_height - 1.5, radius, is_top_tab=False)
             c.setFillColor(TAB_TEXT_ACTIVE)
         else:
-            c.setFillColor(ACCENT_PINK)
+            bg_color = ACCENT_PINK if i % 2 == 0 else ACCENT_GREEN
+            c.setFillColor(bg_color)
             draw_folder_tab_bg(c, x, y, tab_width, tab_height - 1.5, radius, is_top_tab=False)
             c.setFillColor(DARK_BROWN)
             
@@ -144,9 +146,7 @@ def draw_right_tabs(c, width, height, active_month="", active_top=""):
         c.restoreState()
         
         # --- УМНАЯ НАВИГАЦИЯ ---
-        if tab == "2028":
-            target = "YEAR"
-        elif active_top == "HABITS":
+        if active_top == "HABITS":
             target = f"HABITS_{tab}"  # Переход сразу на привычки этого месяца
         elif active_top == "MONEY":
             target = f"MONEY_{tab}"   # Переход сразу на финансы этого месяца
@@ -508,75 +508,208 @@ def draw_home_block(c, bx, by, block_w, block_h, title, desc, num):
     c.linkAbsolute(f"Link_{title}", title.upper(), (bx, by, bx + block_w, by + block_h))
 
 def create_year_page(c, width, height, is_landscape, sunday_start=False):
-    draw_base_page(c, width, height, active_top="YEAR", active_right="2028", page_name="YEAR")
+    import datetime
+    draw_base_page(c, width, height, active_top="YEAR", active_right="", page_name="YEAR")
     
     margin_x = 15 * mm
     main_area_w = width - margin_x - (25 * mm if is_landscape else 20 * mm)
-    content_y = height - 35 * mm
+    content_y = height - 25 * mm
+    bottom_margin = 15 * mm
     
+    # Заголовок страницы в едином стиле со всем планером
     c.setFillColor(DARK_BROWN)
+    title_str = f"{YEAR} YEARLY OVERVIEW"
     c.setFont("Playfair-Bold", 24)
-    c.drawString(margin_x, content_y, str(YEAR))
+    c.drawString(margin_x, content_y, title_str)
     
-    cols = 4 if is_landscape else 3
-    rows = 3 if is_landscape else 4
+    title_w = c.stringWidth(title_str, "Playfair-Bold", 24)
+    c.setFont("Montserrat", 10)
+    c.setFillColor(HexColor("#A89F91"))
+    c.drawString(margin_x + title_w + 5 * mm, content_y + 2 * mm, "| Tap any month, week, or day to jump directly")
     
-    col_w = main_area_w / cols
-    row_h = (content_y - 15 * mm) / rows
-    
-    # --- ЛОГИКА НАЧАЛА НЕДЕЛИ ---
+    content_y -= 8 * mm
+    available_h = content_y - bottom_margin
+    gap = 4 * mm
+
+    # Настройка начала недели
     if sunday_start:
-        calendar.setfirstweekday(6) # 6 = Воскресенье
+        calendar.setfirstweekday(6)
         days = ["Wk", "S", "M", "T", "W", "T", "F", "S"]
     else:
-        calendar.setfirstweekday(0) # 0 = Понедельник
+        calendar.setfirstweekday(0)
         days = ["Wk", "M", "T", "W", "T", "F", "S", "S"]
-    
-    month_num = 1
-    
-    for r in range(rows):
-        for col in range(cols):
-            if month_num > 12: break
-            
-            x = margin_x + col * col_w
-            y = content_y - 15 * mm - r * row_h
-            
-            c.setFillColor(DARK_BROWN)
-            c.setFont("Montserrat-Bold", 10)
-            month_label = calendar.month_name[month_num].upper()
-            c.drawString(x, y, month_label)
-            c.linkAbsolute(f"link_M_{month_num}", f"MONTH_{RIGHT_TABS[month_num]}", (x, y - 2*mm, x + 30*mm, y + 10*mm))
-            
-            cell_w = (col_w - 10*mm) / 8
-            c.setFont("Montserrat-Bold", 6)
-            for i, d in enumerate(days):
-                c.drawString(x + i * cell_w, y - 6 * mm, d)
-                
-            month_matrix = calendar.monthcalendar(YEAR, month_num)
-            c.setFont("Montserrat", 6)
-            
-            for week_idx, week in enumerate(month_matrix):
-                week_y = y - 11 * mm - week_idx * 4.5 * mm
-                
-                sample_day = next((d for d in week if d != 0), 1)
-                import datetime
-                iso_year, iso_week, _ = datetime.date(YEAR, month_num, sample_day).isocalendar()
-                
-                c.setFillColor(HexColor("#A89F91")) 
-                c.drawString(x, week_y, str(iso_week))
-                c.linkAbsolute(f"link_W_{iso_week}", f"WEEK_{iso_year}_{iso_week}", (x, week_y - 1*mm, x + cell_w, week_y + 3*mm))
 
-                c.setFillColor(DARK_BROWN)
-                for day_idx, day_num in enumerate(week):
-                    if day_num != 0:
-                        day_x = x + (day_idx + 1) * cell_w
-                        c.drawString(day_x, week_y, str(day_num))
-                        target_day = f"DAY_{YEAR}-{month_num:02d}-{day_num:02d}"
-                        c.linkAbsolute(target_day, target_day, (day_x - 1*mm, week_y - 1*mm, day_x + cell_w - 1*mm, week_y + 3*mm))
-                        
-            month_num += 1
+    # Распределение зон: Сетка 12 месяцев + Блок квартального фокуса (Q1-Q4)
+    if is_landscape:
+        cal_w = main_area_w * 0.72
+        cal_h = available_h
+        cols, rows = 4, 3
+        
+        q_x = margin_x + cal_w + gap
+        q_y = bottom_margin
+        q_w = main_area_w - cal_w - gap
+        q_h = available_h
+        cal_top_y = content_y
+    else:
+        cal_w = main_area_w
+        cal_h = available_h * 0.73
+        cols, rows = 3, 4
+        
+        q_x = margin_x
+        q_y = bottom_margin
+        q_w = main_area_w
+        q_h = available_h - cal_h - gap
+        cal_top_y = content_y
+
+    card_w = (cal_w - gap * (cols - 1)) / cols
+    card_h = (cal_h - gap * (rows - 1)) / rows
+
+    # --- 1. ОТРИСОВКА 12 КАРТОЧЕК МЕСЯЦЕВ ---
+    for m_idx in range(12):
+        month_num = m_idx + 1
+        col = m_idx % cols
+        row = m_idx // cols
+        
+        cx = margin_x + col * (card_w + gap)
+        cy = cal_top_y - (row + 1) * card_h - row * gap
+        
+        # Карточка месяца
+        c.setFillColor(BOX_BG_COLOR)
+        c.setStrokeColor(HexColor("#D8D0C5"))
+        c.setLineWidth(0.5)
+        c.roundRect(cx, cy, card_w, card_h, 2 * mm, fill=1, stroke=1)
+        
+        # Шапка карточки с названием месяца
+        header_h = 6 * mm
+        c.setFillColor(ACCENT_PINK if m_idx % 2 == 0 else ACCENT_GREEN)
+        c.roundRect(cx, cy + card_h - header_h, card_w, header_h, 2 * mm, fill=1, stroke=0)
+        c.rect(cx, cy + card_h - header_h, card_w, 2 * mm, fill=1, stroke=0) # Прямые нижние углы шапки
+        
+        c.setFillColor(DARK_BROWN)
+        c.setFont("Montserrat-Bold", 7.5)
+        month_label = calendar.month_name[month_num].upper()
+        c.drawCentredString(cx + card_w / 2, cy + card_h - header_h + 1.8 * mm, month_label)
+        
+        # Ссылка с шапки на страницу месяца
+        month_tab_name = RIGHT_TABS[month_num]
+        c.linkAbsolute(f"link_M_{month_num}", f"MONTH_{month_tab_name}", (cx, cy + card_h - header_h, cx + card_w, cy + card_h))
+        
+        # Сетка внутри карточки
+        pad_x = 2 * mm
+        cell_w = (card_w - 2 * pad_x) / 8
+        
+        # Заголовки дней недели (Wk, M, T, W...)
+        head_y = cy + card_h - header_h - 4 * mm
+        for i, d in enumerate(days):
+            c.setFont("Montserrat-Bold", 5 if i == 0 else 5.5)
+            c.setFillColor(HexColor("#A89F91") if i == 0 else DARK_BROWN)
+            c.drawCentredString(cx + pad_x + (i + 0.5) * cell_w, head_y, d)
             
+        # Разделительная тонкая линия под заголовками дней
+        c.setStrokeColor(HexColor("#EAE5DE"))
+        c.setLineWidth(0.3)
+        c.line(cx + pad_x, head_y - 1.2 * mm, cx + card_w - pad_x, head_y - 1.2 * mm)
+        
+        # Недели и дни
+        month_matrix = calendar.monthcalendar(YEAR, month_num)
+        grid_avail_h = (head_y - 2 * mm) - (cy + 1.5 * mm)
+        week_row_h = grid_avail_h / 6  # Фиксируем 6 строк для одинакового масштаба во всех карточках
+        
+        for week_idx, week in enumerate(month_matrix):
+            wy = head_y - 1.5 * mm - (week_idx + 1) * week_row_h + 1 * mm
+            
+            sample_day = next((d for d in week if d != 0), 1)
+            iso_year, iso_week, _ = datetime.date(YEAR, month_num, sample_day).isocalendar()
+            
+            # Номер недели (кликабельный)
+            wk_x = cx + pad_x + 0.5 * cell_w
+            c.setFont("Montserrat-Bold", 5)
+            c.setFillColor(HexColor("#E07A5F"))
+            c.drawCentredString(wk_x, wy, str(iso_week))
+            c.linkAbsolute(f"link_W_{month_num}_{week_idx}", f"WEEK_{iso_year}_{iso_week}", 
+                           (cx + pad_x, wy - 1 * mm, cx + pad_x + cell_w, wy + week_row_h - 1 * mm))
+            
+            # Числа месяца (кликабельные)
+            c.setFont("Montserrat", 5.5)
+            c.setFillColor(DARK_BROWN)
+            for day_idx, day_num in enumerate(week):
+                if day_num != 0:
+                    dx = cx + pad_x + (day_idx + 1.5) * cell_w
+                    c.drawCentredString(dx, wy, str(day_num))
+                    target_day = f"DAY_{YEAR}-{month_num:02d}-{day_num:02d}"
+                    c.linkAbsolute(target_day, target_day, 
+                                   (dx - cell_w / 2, wy - 1 * mm, dx + cell_w / 2, wy + week_row_h - 1 * mm))
+
+    # --- 2. БЛОК КВАРТАЛЬНЫХ ЦЕЛЕЙ И КЛЮЧЕВЫХ ДАТ (Q1 - Q4) ---
+    c.setFillColor(BOX_BG_COLOR)
+    c.setStrokeColor(HexColor("#D8D0C5"))
+    c.setLineWidth(0.5)
+    c.roundRect(q_x, q_y, q_w, q_h, 2 * mm, fill=1, stroke=1)
+    
+    c.setFillColor(DARK_BROWN)
+    c.setFont("Montserrat-Bold", 8.5)
+    c.drawString(q_x + 4 * mm, q_y + q_h - 6.5 * mm, "KEY DATES & QUARTERLY FOCUS")
+    
+    quarters = [
+        ("Q1 · JAN – MAR", ACCENT_PINK),
+        ("Q2 · APR – JUN", ACCENT_GREEN),
+        ("Q3 · JUL – SEP", ACCENT_PINK),
+        ("Q4 · OCT – DEC", ACCENT_GREEN)
+    ]
+    
+    inner_top = q_y + q_h - 10 * mm
+    inner_bot = q_y + 3 * mm
+    inner_h = inner_top - inner_bot
+    
+    if is_landscape:
+        # 4 квартала вертикально друг под другом
+        qh_item = (inner_h - 3 * (2.5 * mm)) / 4
+        for qi, (q_label, q_col) in enumerate(quarters):
+            qy_box = inner_top - (qi + 1) * qh_item - qi * 2.5 * mm
+            
+            # Плашка квартала
+            c.setFillColor(q_col)
+            c.roundRect(q_x + 4 * mm, qy_box + qh_item - 5 * mm, q_w - 8 * mm, 5 * mm, 1.2 * mm, fill=1, stroke=0)
+            c.setFillColor(DARK_BROWN)
+            c.setFont("Montserrat-Bold", 6.5)
+            c.drawString(q_x + 6 * mm, qy_box + qh_item - 3.8 * mm, q_label)
+            
+            # Линии для записей с буллетами-точками
+            c.setStrokeColor(HexColor("#EAE5DE"))
+            c.setLineWidth(0.4)
+            ly = qy_box + qh_item - 10.5 * mm
+            while ly > qy_box + 1.5 * mm:
+                c.setFillColor(HexColor("#D8D0C5"))
+                c.circle(q_x + 6 * mm, ly + 1 * mm, 0.8 * mm, fill=1, stroke=0)
+                c.line(q_x + 8.5 * mm, ly, q_x + q_w - 4 * mm, ly)
+                ly -= 5.5 * mm
+    else:
+        # В вертикальной ориентации: сетка 2x2 внизу листа
+        qw_item = (q_w - 11 * mm) / 2
+        qh_item = (inner_h - 2.5 * mm) / 2
+        for qi, (q_label, q_col) in enumerate(quarters):
+            q_col_idx = qi % 2
+            q_row_idx = qi // 2
+            qx_box = q_x + 4 * mm + q_col_idx * (qw_item + 3 * mm)
+            qy_box = inner_top - (q_row_idx + 1) * qh_item - q_row_idx * 2.5 * mm
+            
+            c.setFillColor(q_col)
+            c.roundRect(qx_box, qy_box + qh_item - 4.5 * mm, qw_item, 4.5 * mm, 1.2 * mm, fill=1, stroke=0)
+            c.setFillColor(DARK_BROWN)
+            c.setFont("Montserrat-Bold", 6.5)
+            c.drawString(qx_box + 2 * mm, qy_box + qh_item - 3.4 * mm, q_label)
+            
+            c.setStrokeColor(HexColor("#EAE5DE"))
+            c.setLineWidth(0.4)
+            ly = qy_box + qh_item - 9.5 * mm
+            while ly > qy_box + 1.5 * mm:
+                c.setFillColor(HexColor("#D8D0C5"))
+                c.circle(qx_box + 2 * mm, ly + 1 * mm, 0.7 * mm, fill=1, stroke=0)
+                c.line(qx_box + 4 * mm, ly, qx_box + qw_item - 1 * mm, ly)
+                ly -= 5 * mm
+
     c.showPage()
+
 
 
 def create_month_page(c, width, height, is_landscape, month_num, sunday_start=False):
