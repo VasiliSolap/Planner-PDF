@@ -13,23 +13,28 @@ from reportlab.pdfbase.ttfonts import TTFont
 THEMES = {
     "Vanilla": {
         "bg": "#F9F6F0", "accent1": "#D5CABD", "accent2": "#E8E2D9",
-        "text": "#5C544D", "tab_bg": "#5C544D", "tab_text": "#FFFFFF", "box_bg": "#FFFFFF"
+        "text": "#5C544D", "tab_bg": "#5C544D", "tab_text": "#FFFFFF", "box_bg": "#FFFFFF",
+        "shadow": "#E2DCD3" # ← Сделали тень контрастнее
     },
     "Matcha": {
         "bg": "#F4F7F4", "accent1": "#A3B19B", "accent2": "#C5D1BF",
-        "text": "#4A5346", "tab_bg": "#4A5346", "tab_text": "#FFFFFF", "box_bg": "#FFFFFF"
+        "text": "#4A5346", "tab_bg": "#4A5346", "tab_text": "#FFFFFF", "box_bg": "#FFFFFF",
+        "shadow": "#E5EBE5"
     },
     "Midnight": {
         "bg": "#1C1C1E", "accent1": "#2C2C2E", "accent2": "#3A3A3C",
-        "text": "#E5E5EA", "tab_bg": "#E5E5EA", "tab_text": "#1C1C1E", "box_bg": "#2C2C2E"
+        "text": "#E5E5EA", "tab_bg": "#E5E5EA", "tab_text": "#1C1C1E", "box_bg": "#2C2C2E",
+        "shadow": "#121214" # ← Глубокая тень для темной темы
     },
     "Lavender": {
         "bg": "#F8F6FA", "accent1": "#C8B8D1", "accent2": "#E2D8E8",
-        "text": "#4A3F54", "tab_bg": "#4A3F54", "tab_text": "#FFFFFF", "box_bg": "#FFFFFF"
+        "text": "#4A3F54", "tab_bg": "#4A3F54", "tab_text": "#FFFFFF", "box_bg": "#FFFFFF",
+        "shadow": "#EBE5ED"
     },
     "Coastal": {
         "bg": "#F0F4F8", "accent1": "#9FB3C8", "accent2": "#C4D4E3",
-        "text": "#2B3A4A", "tab_bg": "#2B3A4A", "tab_text": "#FFFFFF", "box_bg": "#FFFFFF"
+        "text": "#2B3A4A", "tab_bg": "#2B3A4A", "tab_text": "#FFFFFF", "box_bg": "#FFFFFF",
+        "shadow": "#DFE6ED"
     }
 }
 
@@ -40,9 +45,10 @@ DARK_BROWN = HexColor("#FFFFFF")
 TAB_BG_ACTIVE = HexColor("#FFFFFF")
 TAB_TEXT_ACTIVE = HexColor("#FFFFFF")
 BOX_BG_COLOR = HexColor("#FFFFFF")
+SHADOW_COLOR = HexColor("#EAE5DE") # Добавили глобальную переменную
 
 def apply_theme(theme_name):
-    global BG_COLOR, ACCENT_PINK, ACCENT_GREEN, DARK_BROWN, TAB_BG_ACTIVE, TAB_TEXT_ACTIVE, BOX_BG_COLOR
+    global BG_COLOR, ACCENT_PINK, ACCENT_GREEN, DARK_BROWN, TAB_BG_ACTIVE, TAB_TEXT_ACTIVE, BOX_BG_COLOR, SHADOW_COLOR
     t = THEMES[theme_name]
     BG_COLOR = HexColor(t["bg"])
     ACCENT_PINK = HexColor(t["accent1"])
@@ -51,11 +57,13 @@ def apply_theme(theme_name):
     TAB_BG_ACTIVE = HexColor(t["tab_bg"])
     TAB_TEXT_ACTIVE = HexColor(t["tab_text"])
     BOX_BG_COLOR = HexColor(t["box_bg"])
+    SHADOW_COLOR = HexColor(t["shadow"]) # Применяем динамическую тень
+
 
 
 
 # Настройки вкладок
-TOP_TABS = ["HOME", "GUIDE", "YEAR", "BRAIN DUMP", "DONE LIST", "FOCUS LOG", "HABITS", "WEEKLY RESET", "MONEY", "WIN JAR", "VISION", "STICKERS"]
+TOP_TABS = ["HOME", "GUIDE", "YEAR", "BRAIN DUMP", "DONE LIST", "FOCUS LOG", "HABITS", "WEEKLY RESET", "MONEY", "WIN JAR", "VISION", "NOTES", "STICKERS"]
 RIGHT_TABS = ["", "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 PLANNER_NAME = "MindFlow"
 YEAR = 2028
@@ -177,7 +185,7 @@ def draw_utility_icons(c, width, height):
         ("web_cal", "https://calendar.google.com/"), 
         ("app_cal", "calshow://"),                     
         ("mail", "mailto:"),                       
-        ("tasks", "reminders://")            
+        ("tasks", "https://www.icloud.com/reminders")          
     ]
     
     DARK_BROWN = HexColor("#433D34")
@@ -362,6 +370,7 @@ def create_home_page(c, width, height, is_landscape):
     gap = 5 * mm
     
     import datetime
+    import math
     start_date = datetime.date(YEAR, 1, 1)
     iso_y, iso_w, _ = start_date.isocalendar()
     
@@ -377,7 +386,7 @@ def create_home_page(c, width, height, is_landscape):
         ("DAILY PAGES", "Time blocks & priorities", link_day)
     ]
     
-    # ИСПРАВЛЕННЫЕ ССЫЛКИ ДЛЯ HABITS И MONEY
+    # Добавили DOPAMINE MENU в список
     extra_items = [
         ("BRAIN DUMP", "Clear your mind", "BRAIN DUMP"),
         ("DONE LIST", "Celebrate your wins", "DONE LIST"),
@@ -387,7 +396,8 @@ def create_home_page(c, width, height, is_landscape):
         ("MONEY", "Finances without guilt", f"MONEY_{RIGHT_TABS[1]}"),
         ("WIN JAR", "Collect good moments", "WIN JAR"),
         ("VISION", "Your big picture", "VISION"),
-        ("STICKERS", "Copy & paste elements", "STICKERS")
+        ("STICKERS", "Copy & paste elements", "STICKERS"),
+        ("DOPAMINE MENU", "Healthy recharge ideas", "DOPAMINE MENU") # НОВЫЙ БЛОК
     ]
     
     def draw_card(cx, cy, cw, ch, title, desc, target):
@@ -447,14 +457,17 @@ def create_home_page(c, width, height, is_landscape):
         c.setFont("Montserrat-Bold", 10)
         c.drawString(margin_x + core_w + gap, content_y - 5 * mm, "LIFESTYLE & EXTRAS")
         
-        ext_col_w = (extras_w - 2 * gap) / 3
-        ext_h = (available_h - 10 * mm - 2 * gap) / 3
+        # Динамический расчет рядов для любого количества блоков
+        ext_cols = 3
+        ext_rows = math.ceil(len(extra_items) / ext_cols)
+        ext_col_w = (extras_w - (ext_cols - 1) * gap) / ext_cols
+        ext_h = (available_h - 10 * mm - (ext_rows - 1) * gap) / ext_rows
         
         for i, (title, desc, target) in enumerate(extra_items):
-            col = i % 3
-            row = i // 3
+            col = i % ext_cols
+            row = i // ext_cols
             cx = margin_x + core_w + gap + col * (ext_col_w + gap)
-            cy = bottom_margin + (2 - row) * (ext_h + gap)
+            cy = bottom_margin + (ext_rows - 1 - row) * (ext_h + gap)
             draw_card(cx, cy, ext_col_w, ext_h, title, desc, target)
             
     else:
@@ -481,18 +494,19 @@ def create_home_page(c, width, height, is_landscape):
         c.drawString(margin_x, extras_start_y, "LIFESTYLE & EXTRAS")
         
         ext_area_h = extras_start_y - bottom_margin - 5 * mm
-        ext_col_w = (main_area_w - 2 * gap) / 3
-        ext_h = (ext_area_h - 2 * gap) / 3
+        ext_cols = 3
+        ext_rows = math.ceil(len(extra_items) / ext_cols)
+        ext_col_w = (main_area_w - (ext_cols - 1) * gap) / ext_cols
+        ext_h = (ext_area_h - (ext_rows - 1) * gap) / ext_rows
         
         for i, (title, desc, target) in enumerate(extra_items):
-            col = i % 3
-            row = i // 3
+            col = i % ext_cols
+            row = i // ext_cols
             cx = margin_x + col * (ext_col_w + gap)
-            cy = bottom_margin + (2 - row) * (ext_h + gap)
+            cy = bottom_margin + (ext_rows - 1 - row) * (ext_h + gap)
             draw_card(cx, cy, ext_col_w, ext_h, title, desc, target)
 
     c.showPage()
-
 
 def draw_home_block(c, bx, by, block_w, block_h, title, desc, num):
     c.setFillColor(HexColor("#FFFFFF"))
@@ -711,283 +725,467 @@ def create_year_page(c, width, height, is_landscape, sunday_start=False):
     c.showPage()
 
 
-
 def create_month_page(c, width, height, is_landscape, month_num, sunday_start=False):
     import datetime
-    month_name = RIGHT_TABS[month_num] 
+    import calendar
+    
+    month_name = RIGHT_TABS[month_num]
     draw_base_page(c, width, height, active_right=month_name, page_name=f"MONTH_{month_name}")
     
     margin_x = 15 * mm
     main_area_w = width - margin_x - (25 * mm if is_landscape else 20 * mm)
-    grid_y_start = height - 38 * mm
+    content_y = height - 22 * mm
     bottom_margin = 15 * mm
-    gap = 4 * mm
     
+    # Премиальный заголовок месяца
     c.setFillColor(DARK_BROWN)
     c.setFont("Playfair-Bold", 24)
     full_month_name = calendar.month_name[month_num]
-    c.drawString(margin_x, grid_y_start + 8 * mm, f"{full_month_name} {YEAR}".upper())
+    title_str = f"{full_month_name} {YEAR}".upper()
+    c.drawString(margin_x, content_y, title_str)
     
-    # --- ЛОГИКА НАЧАЛА НЕДЕЛИ ---
+    title_w = c.stringWidth(title_str, "Playfair-Bold", 24)
+    c.setFont("Montserrat", 10)
+    c.setFillColor(HexColor("#A89F91"))
+    c.drawString(margin_x + title_w + 5 * mm, content_y + 2 * mm, "| High-level overview & priorities")
+    
+    # Установка начала недели
     if sunday_start:
         calendar.setfirstweekday(6)
         days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
     else:
-        calendar.setfirstweekday(0) 
+        calendar.setfirstweekday(0)
         days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
         
     month_matrix = calendar.monthcalendar(YEAR, month_num)
     rows = len(month_matrix)
-    tracker_btn_h = 10 * mm 
     
+    content_y -= 8 * mm
+    available_h = content_y - bottom_margin
+    gap = 4 * mm
+    
+    # Распределение зон для Bento-сетки
     if is_landscape:
-        notes_w = 65 * mm
-        calendar_w = main_area_w - notes_w - gap
-        notes_x = margin_x + calendar_w + gap
-        notes_y = bottom_margin + tracker_btn_h + gap 
-        notes_h = grid_y_start - notes_y
-        grid_bottom = bottom_margin
+        right_w = main_area_w * 0.28
+        cal_w = main_area_w - right_w - gap
+        cal_x = margin_x
+        right_x = margin_x + cal_w + gap
+        cal_h = available_h
+        right_h = available_h
     else:
-        notes_h = 40 * mm 
-        calendar_w = main_area_w
-        notes_x = margin_x
-        notes_y = bottom_margin + tracker_btn_h + gap
-        grid_bottom = notes_y + notes_h + gap
-        
-    grid_h = grid_y_start - grid_bottom
-    row_height = grid_h / rows
-    
-    week_col_w = 8 * mm
-    day_col_w = (calendar_w - week_col_w) / 7
-    
-    c.setFillColor(BOX_BG_COLOR)
-    c.setStrokeColor(HexColor("#D8D0C5"))
-    notes_actual_w = notes_w if is_landscape else main_area_w
-    c.roundRect(notes_x, notes_y, notes_actual_w, notes_h, 2 * mm, fill=1, stroke=1)
-    
-    c.setFillColor(DARK_BROWN)
-    c.setFont("Montserrat-Bold", 9)
-    c.drawString(notes_x + 5 * mm, notes_y + notes_h - 7 * mm, "MONTHLY GOALS & NOTES")
-    
-    c.setLineWidth(0.5)
-    line_y = notes_y + notes_h - 14 * mm
-    while line_y > notes_y + 4 * mm:
-        c.setStrokeColor(HexColor("#D8D0C5"))
-        c.circle(notes_x + 7 * mm, line_y + 1 * mm, 1.5 * mm, fill=0, stroke=1)
-        c.setStrokeColor(HexColor("#EAE5DE"))
-        c.line(notes_x + 12 * mm, line_y, notes_x + notes_actual_w - 5 * mm, line_y)
-        line_y -= 7 * mm
+        bottom_h = available_h * 0.28
+        cal_h = available_h - bottom_h - gap
+        cal_w = main_area_w
+        cal_x = margin_x
+        right_x = margin_x
+        right_w = main_area_w
+        right_h = bottom_h
 
-    btn_w = (notes_actual_w - gap) / 2
-    btn_y = notes_y - gap - tracker_btn_h
+    # --- 1. ОТРИСОВКА СЕТКИ КАЛЕНДАРЯ ---
+    week_btn_w = 7.5 * mm
+    day_w = (cal_w - week_btn_w - gap) / 7
+    day_h = (cal_h - 7 * mm - (rows - 1) * gap) / rows # 7 mm под дни недели сверху
     
-    c.setFillColor(ACCENT_GREEN)
-    c.roundRect(notes_x, btn_y, btn_w, tracker_btn_h, 2 * mm, fill=1, stroke=0)
-    c.setFillColor(DARK_BROWN)
-    c.setFont("Montserrat-Bold", 7.5)
-    c.drawCentredString(notes_x + btn_w / 2, btn_y + 4 * mm, "HABITS →")
-    c.linkAbsolute(f"HABITS_{month_name}", f"HABITS_{month_name}", (notes_x, btn_y, notes_x + btn_w, btn_y + tracker_btn_h))
-    
-    c.setFillColor(ACCENT_PINK)
-    c.roundRect(notes_x + btn_w + gap, btn_y, btn_w, tracker_btn_h, 2 * mm, fill=1, stroke=0)
-    c.setFillColor(DARK_BROWN)
-    c.drawCentredString(notes_x + btn_w + gap + btn_w / 2, btn_y + 4 * mm, "FINANCE →")
-    c.linkAbsolute(f"MONEY_{month_name}", f"MONEY_{month_name}", (notes_x + btn_w + gap, btn_y, notes_x + btn_w * 2 + gap, btn_y + tracker_btn_h))
-
-    c.setFont("Montserrat-Bold", 7)
+    # Заголовки дней недели
+    c.setFont("Montserrat-Bold", 6.5)
     c.setFillColor(HexColor("#A89F91"))
     for i, day in enumerate(days):
-        x = margin_x + week_col_w + i * day_col_w
-        c.drawCentredString(x + day_col_w / 2, grid_y_start + 2 * mm, day)
-    
-    cell_gap = 1.5 * mm  
-    cell_radius = 1.5 * mm
-    for row_idx, week in enumerate(month_matrix):
-        y = grid_y_start - (row_idx + 1) * row_height
+        dx = cal_x + week_btn_w + gap + i * day_w + day_w / 2
+        c.drawCentredString(dx, content_y - 3 * mm, day)
         
+    grid_top = content_y - 7 * mm
+    
+    for row_idx, week in enumerate(month_matrix):
+        y = grid_top - (row_idx + 1) * day_h - row_idx * gap
+        
+        # Кнопка перехода на Неделю (W1, W2...)
         sample_day = next((d for d in week if d != 0), 1)
         iso_year, iso_week, _ = datetime.date(YEAR, month_num, sample_day).isocalendar()
         week_target = f"WEEK_{iso_year}_{iso_week}"
         
-        c.setFillColor(ACCENT_PINK)
-        c.roundRect(margin_x, y + cell_gap/2, week_col_w - cell_gap, row_height - cell_gap, cell_radius, fill=1, stroke=0)
-        c.setFillColor(DARK_BROWN)
-        c.setFont("Montserrat-Bold", 6)
+        c.setFillColor(SHADOW_COLOR) # Тень
+        c.roundRect(cal_x + 1 * mm, y - 1 * mm, week_btn_w, day_h, 2 * mm, fill=1, stroke=0)
+        c.setFillColor(ACCENT_PINK if row_idx % 2 == 0 else ACCENT_GREEN)
+        c.roundRect(cal_x, y, week_btn_w, day_h, 2 * mm, fill=1, stroke=0)
         
         c.saveState()
-        c.translate(margin_x + (week_col_w - cell_gap)/2, y + row_height/2)
+        c.translate(cal_x + week_btn_w / 2, y + day_h / 2)
         c.rotate(90)
-        c.drawCentredString(0, -1.8 * mm, f"W{iso_week}")
+        c.setFillColor(DARK_BROWN)
+        c.setFont("Montserrat-Bold", 6.5)
+        c.drawCentredString(0, -2 * mm, f"W{iso_week}")
         c.restoreState()
         
-        c.linkAbsolute(week_target, week_target, (margin_x, y, margin_x + week_col_w, y + row_height))
+        c.linkAbsolute(week_target, week_target, (cal_x, y, cal_x + week_btn_w, y + day_h))
         
-        c.setFont("Montserrat", 9)
+               # Карточки дней
         for col_idx, day_num in enumerate(week):
-            x = margin_x + week_col_w + col_idx * day_col_w
-            c.setStrokeColor(HexColor("#D8D0C5"))
-            c.setFillColor(BG_COLOR)
-            c.roundRect(x + cell_gap/2, y + cell_gap/2, day_col_w - cell_gap, row_height - cell_gap, cell_radius, fill=1, stroke=1)
+            dx = cal_x + week_btn_w + gap + col_idx * day_w
             
+            # Отрисовываем карточку только если это реальный день месяца
             if day_num != 0:
-                c.setFillColor(DARK_BROWN)
-                c.drawString(x + cell_gap + 2 * mm, y + row_height - cell_gap - 4 * mm, str(day_num))
-                target_day_name = f"DAY_{YEAR}-{month_num:02d}-{day_num:02d}"
-                c.linkAbsolute(target_day_name, target_day_name, (x + cell_gap, y + row_height - cell_gap - 8 * mm, x + cell_gap + 10 * mm, y + row_height - cell_gap))
+                # Bento Shadow
+                c.setFillColor(SHADOW_COLOR)
+                c.roundRect(dx + 1 * mm, y - 1 * mm, day_w, day_h, 2 * mm, fill=1, stroke=0)
                 
+                # Сама белая карточка
+                c.setFillColor(BOX_BG_COLOR)
+                c.setStrokeColor(HexColor("#D8D0C5"))
+                c.setLineWidth(0.5)
+                c.roundRect(dx, y, day_w, day_h, 2 * mm, fill=1, stroke=1)
+                
+                # Номер дня
+                c.setFillColor(DARK_BROWN)
+                c.setFont("Montserrat-Bold", 9)
+                c.drawString(dx + 4 * mm, y + day_h - 6 * mm, str(day_num))
+                
+                # Кликабельная зона ТОЛЬКО на номере дня
+                target_day = f"DAY_{YEAR}-{month_num:02d}-{day_num:02d}"
+                c.linkAbsolute(target_day, target_day, (dx, y + day_h - 10 * mm, dx + 12 * mm, y + day_h))
+
+    # --- 2. ПАНЕЛЬ УПРАВЛЕНИЯ МЕСЯЦЕМ (Review Bar) ---
+    btn_h = 9 * mm
+    if is_landscape:
+        btn_w = (right_w - gap) / 2
+        hab_x, hab_y = right_x, bottom_margin + right_h - btn_h
+        fin_x, fin_y = right_x + btn_w + gap, bottom_margin + right_h - btn_h
+        
+        box_area_top = bottom_margin + right_h - btn_h - gap
+        box_h = (box_area_top - bottom_margin - 2 * gap) / 3
+        
+        b1_x, b1_y, b1_w, b1_h = right_x, bottom_margin + 2 * (box_h + gap), right_w, box_h
+        b2_x, b2_y, b2_w, b2_h = right_x, bottom_margin + box_h + gap, right_w, box_h
+        b3_x, b3_y, b3_w, b3_h = right_x, bottom_margin, right_w, box_h
+    else:
+        btn_w = (right_w - gap) / 2
+        hab_x, hab_y = right_x, bottom_margin + right_h - btn_h
+        fin_x, fin_y = right_x + btn_w + gap, bottom_margin + right_h - btn_h
+        
+        box_area_top = bottom_margin + right_h - btn_h - gap
+        box_w = (right_w - 2 * gap) / 3
+        box_h = box_area_top - bottom_margin
+        
+        b1_x, b1_y, b1_w, b1_h = right_x, bottom_margin, box_w, box_h
+        b2_x, b2_y, b2_w, b2_h = right_x + box_w + gap, bottom_margin, box_w, box_h
+        b3_x, b3_y, b3_w, b3_h = right_x + 2 * (box_w + gap), bottom_margin, box_w, box_h
+
+    # Кнопки HABITS и FINANCE
+    c.setFillColor(ACCENT_GREEN)
+    c.roundRect(hab_x, hab_y, btn_w, btn_h, 2 * mm, fill=1, stroke=0)
+    c.setFillColor(DARK_BROWN)
+    c.setFont("Montserrat-Bold", 7.5)
+    c.drawCentredString(hab_x + btn_w / 2, hab_y + 3.2 * mm, "HABITS →")
+    c.linkAbsolute(f"HABITS_{month_name}", f"HABITS_{month_name}", (hab_x, hab_y, hab_x + btn_w, hab_y + btn_h))
+    
+    c.setFillColor(ACCENT_PINK)
+    c.roundRect(fin_x, fin_y, btn_w, btn_h, 2 * mm, fill=1, stroke=0)
+    c.setFillColor(DARK_BROWN)
+    c.drawCentredString(fin_x + btn_w / 2, fin_y + 3.2 * mm, "FINANCE →")
+    c.linkAbsolute(f"MONEY_{month_name}", f"MONEY_{month_name}", (fin_x, fin_y, fin_x + btn_w, fin_y + btn_h))
+
+    # Три карточки планирования
+    def draw_review_box(bx, by, bw, bh, title):
+        c.setFillColor(SHADOW_COLOR)
+        c.roundRect(bx + 1 * mm, by - 1 * mm, bw, bh, 2.5 * mm, fill=1, stroke=0)
+        c.setFillColor(BOX_BG_COLOR)
+        c.setStrokeColor(HexColor("#D8D0C5"))
+        c.setLineWidth(0.5)
+        c.roundRect(bx, by, bw, bh, 2.5 * mm, fill=1, stroke=1)
+        
+        c.setFillColor(DARK_BROWN)
+        c.setFont("Montserrat-Bold", 8)
+        c.drawString(bx + 5 * mm, by + bh - 8 * mm, title)
+        c.setStrokeColor(HexColor("#EAE5DE"))
+        c.line(bx + 5 * mm, by + bh - 10.5 * mm, bx + bw - 5 * mm, by + bh - 10.5 * mm)
+        
+        ly = by + bh - 16 * mm
+        while ly > by + 4 * mm:
+            c.line(bx + 5 * mm, ly, bx + bw - 5 * mm, ly)
+            ly -= 6.5 * mm
+
+    draw_review_box(b1_x, b1_y, b1_w, b1_h, "MONTHLY GOALS")
+    draw_review_box(b2_x, b2_y, b2_w, b2_h, "BILLS & EXPENSES")
+    draw_review_box(b3_x, b3_y, b3_w, b3_h, "WINS & GRATITUDE")
+
     c.showPage()
 
 def create_weekly_page(c, width, height, is_landscape, iso_year, week_num, sunday_start=False):
     import datetime
     
-    # --- ЛОГИКА НАЧАЛА НЕДЕЛИ ---
     first_day_of_week = datetime.date.fromisocalendar(iso_year, week_num, 1)
     if sunday_start:
         first_day_of_week -= datetime.timedelta(days=1)
         
     last_day_of_week = first_day_of_week + datetime.timedelta(days=6)
+    active_month = RIGHT_TABS[first_day_of_week.month] if 1 <= first_day_of_week.month <= 12 else "JAN"
     
-    active_month = RIGHT_TABS[first_day_of_week.month]
+    day_letters = ["S", "M", "T", "W", "T", "F", "S"] if sunday_start else ["M", "T", "W", "T", "F", "S", "S"]
     
     page_name = f"WEEK_{iso_year}_{week_num}"
     draw_base_page(c, width, height, active_right=active_month, page_name=page_name)
     
     margin_x = 15 * mm
     main_area_w = width - margin_x - (25 * mm if is_landscape else 20 * mm)
-    content_y = height - 25 * mm
+    content_y = height - 22 * mm
+    bottom_margin = 15 * mm
     
+    # Кнопка возврата к месяцу
+    c.setFont("Montserrat-Bold", 7)
+    c.setFillColor(HexColor("#8C8377"))
+    c.drawString(margin_x, content_y + 9 * mm, f"← {active_month} OVERVIEW")
+    c.linkAbsolute(f"MONTH_{active_month}", f"MONTH_{active_month}", (margin_x, content_y + 7 * mm, margin_x + 32 * mm, content_y + 13 * mm))
+    
+    # Заголовок недели
     c.setFillColor(DARK_BROWN)
     week_str = f"WEEK {week_num}"
-    c.setFont("Playfair-Bold", 19)
+    c.setFont("Playfair-Bold", 22)
     c.drawString(margin_x, content_y, week_str)
     
-    week_w = c.stringWidth(week_str, "Playfair-Bold", 19)
-    
+    week_w = c.stringWidth(week_str, "Playfair-Bold", 22)
     if first_day_of_week.month == last_day_of_week.month:
         date_range = f"{first_day_of_week.strftime('%B')} {first_day_of_week.day} - {last_day_of_week.day}, {first_day_of_week.year}".upper()
     else:
         date_range = f"{first_day_of_week.strftime('%b %d')} - {last_day_of_week.strftime('%b %d, %Y')}".upper()
         
-    c.setFont("Montserrat-Bold", 9)
-    c.setFillColor(HexColor("#A89F91")) 
-    c.drawString(margin_x + week_w + 5 * mm, content_y + 1.5 * mm, f"|   {date_range}")
+    c.setFont("Montserrat", 9)
+    c.setFillColor(HexColor("#8C8377"))
+    c.drawString(margin_x + week_w + 4 * mm, content_y + 1.5 * mm, f"|   {date_range}")
     
-    c.setFillColor(DARK_BROWN)
-    c.setFont("Montserrat-Bold", 7)
-    c.drawString(margin_x, content_y + 8 * mm, f"← BACK TO {active_month}")
-    c.linkAbsolute(f"MONTH_{active_month}", f"MONTH_{active_month}", (margin_x, content_y + 6 * mm, margin_x + 30 * mm, content_y + 12 * mm))
-    
-    content_y -= 10 * mm
-    bottom_margin = 15 * mm
+    content_y -= 8 * mm
     available_h = content_y - bottom_margin
-    gap = 5 * mm
-    
-    cols, rows = (4, 2) if is_landscape else (2, 4)
-        
-    box_w = (main_area_w - gap * (cols - 1)) / cols
-    box_h = (available_h - gap * (rows - 1)) / rows
-    
-    for i in range(8):
-        col = i % cols
-        row = i // cols
-        
-        bx = margin_x + col * (box_w + gap)
-        by = content_y - (row + 1) * box_h - row * gap
-        
-        if i < 7:
-            current_day = first_day_of_week + datetime.timedelta(days=i)
-            day_label = current_day.strftime("%A").upper()
-            date_label = current_day.strftime("%d %b")
-            
-            c.setFillColor(BOX_BG_COLOR)
-            c.setStrokeColor(HexColor("#D8D0C5"))
-            c.roundRect(bx, by, box_w, box_h, 2 * mm, fill=1, stroke=1)
-            
-            c.setFillColor(DARK_BROWN)
-            c.setFont("Montserrat-Bold", 9)
-            c.drawString(bx + 5 * mm, by + box_h - 7 * mm, day_label)
-            
-            c.setFont("Montserrat", 8)
-            date_w = c.stringWidth(date_label, "Montserrat", 8)
-            c.drawString(bx + box_w - 5 * mm - date_w, by + box_h - 7 * mm, date_label)
-            
-            line_spacing = 7 * mm
-            line_y = by + box_h - 14 * mm
-            c.setLineWidth(0.5)
-            c.setStrokeColor(HexColor("#EAE5DE"))
-            while line_y > by + 2 * mm:
-                c.line(bx + 5 * mm, line_y, bx + box_w - 5 * mm, line_y)
-                line_y -= line_spacing
-            
-            if current_day.year == YEAR:
-                target_day = f"DAY_{current_day.strftime('%Y-%m-%d')}"
-                # Ссылка спрятана строго внутри условия!
-                c.linkAbsolute(target_day, target_day, (bx + box_w - 20 * mm, by + box_h - 10 * mm, bx + box_w, by + box_h))
+    gap = 4 * mm
 
-                       
-        else:
-            c.setFillColor(BOX_BG_COLOR)
+    if is_landscape:
+        # === ГОРИЗОНТАЛЬНЫЙ WEEKLY DASHBOARD ===
+        left_w = main_area_w * 0.27
+        right_w = main_area_w - left_w - gap
+        
+        # 1. Левый сайдбар
+        c.setFillColor(SHADOW_COLOR)
+        c.roundRect(margin_x + 1 * mm, bottom_margin - 1 * mm, left_w, available_h, 3 * mm, fill=1, stroke=0)
+        c.setFillColor(BOX_BG_COLOR)
+        c.setStrokeColor(HexColor("#D8D0C5"))
+        c.setLineWidth(0.5)
+        c.roundRect(margin_x, bottom_margin, left_w, available_h, 3 * mm, fill=1, stroke=1)
+        
+        c.setFillColor(DARK_BROWN)
+        c.setFont("Montserrat-Bold", 8)
+        c.drawString(margin_x + 6 * mm, bottom_margin + available_h - 9 * mm, "WEEKLY CONTROL")
+        
+        # Блок: Top 3
+        top3_y = bottom_margin + available_h - 16 * mm
+        c.setFont("Montserrat-Bold", 7)
+        c.setFillColor(HexColor("#E07A5F"))
+        c.drawString(margin_x + 6 * mm, top3_y, "★ THIS WEEK'S TOP 3")
+        
+        for t_idx in range(3):
+            ly = top3_y - 6 * mm - t_idx * 6 * mm
+            c.setFillColor(HexColor("#FFFFFF"))
             c.setStrokeColor(HexColor("#D8D0C5"))
-            c.roundRect(bx, by, box_w, box_h, 2 * mm, fill=1, stroke=1)
-            
-            focus_h = box_h * 0.55
-            c.setFillColor(DARK_BROWN)
-            c.setFont("Montserrat-Bold", 9)
-            c.drawString(bx + 5 * mm, by + box_h - 7 * mm, "WEEKLY FOCUS")
-            
-            c.setLineWidth(0.5)
+            c.roundRect(margin_x + 6 * mm, ly, 3 * mm, 3 * mm, 0.8 * mm, fill=1, stroke=1)
             c.setStrokeColor(HexColor("#EAE5DE"))
-            line_y = by + box_h - 14 * mm
-            while line_y > by + box_h - focus_h + 2 * mm:
-                c.line(bx + 5 * mm, line_y, bx + box_w - 5 * mm, line_y)
-                line_y -= 7 * mm
-                
-            habits_y = by + box_h - focus_h
-            c.setFillColor(DARK_BROWN)
-            c.setFont("Montserrat-Bold", 9)
-            c.drawString(bx + 5 * mm, habits_y - 5 * mm, "WEEKLY HABITS")
-            
-            habit_lines = 3
-            h_spacing = (habits_y - 12 * mm - by) / habit_lines
-            
-            left_margin = bx + 5 * mm
-            right_margin = bx + box_w - 5 * mm
-            total_w = right_margin - left_margin
-            
-            line_w = total_w * 0.40
-            circles_area_w = total_w * 0.60
-            circles_start_x = right_margin - circles_area_w
-            
-            circle_radius = min(1.8 * mm, circles_area_w / 25)
-            days_gap = (circles_area_w - (7 * circle_radius * 2)) / 6
-                
-            for h_idx in range(habit_lines):
-                hy = by + 4 * mm + h_idx * h_spacing
-                
-                c.setLineWidth(0.5)
-                c.setStrokeColor(HexColor("#EAE5DE"))
-                c.line(left_margin, hy, left_margin + line_w - 2 * mm, hy)
-                
-                c.setLineWidth(0.5)
-                c.setStrokeColor(HexColor("#D8D0C5"))
-                for d_idx in range(7):
-                    cx = circles_start_x + d_idx * (circle_radius * 2 + days_gap) + circle_radius
-                    c.setFillColor(HexColor("#FFFFFF"))
-                    c.circle(cx, hy + 1 * mm, circle_radius, fill=1, stroke=1)
-            
-            top_row_y = by + 4 * mm + (habit_lines - 1) * h_spacing 
-            letters_y = top_row_y + circle_radius + 3 * mm          
-            
+            c.setLineWidth(0.4)
+            c.line(margin_x + 11 * mm, ly + 1.5 * mm, margin_x + left_w - 6 * mm, ly + 1.5 * mm)
+
+        # Блок: Micro Habits (ИСПРАВЛЕННЫЙ РАЗМЕР ЛИНИЙ)
+        habits_start_y = top3_y - 25 * mm
+        c.setFont("Montserrat-Bold", 7)
+        c.setFillColor(DARK_BROWN)
+        c.drawString(margin_x + 6 * mm, habits_start_y, "⚡ MICRO HABITS")
+        
+        # Делим ширину: 45% под текст привычки, 55% под кружочки
+        text_area_w = (left_w - 12 * mm) * 0.45
+        circles_area_w = (left_w - 12 * mm) * 0.55
+        circles_start_x = margin_x + 6 * mm + text_area_w
+        h_cell_w = circles_area_w / 7
+        
+        for d_i, d_char in enumerate(day_letters):
             c.setFont("Montserrat-Bold", 5)
             c.setFillColor(HexColor("#A89F91"))
+            c.drawCentredString(circles_start_x + d_i * h_cell_w + h_cell_w/2, habits_start_y - 4 * mm, d_char)
             
-            # --- БУКВЫ ДНЕЙ НЕДЕЛИ ---
-            if sunday_start: day_letters = ["S", "M", "T", "W", "T", "F", "S"]
-            else: day_letters = ["M", "T", "W", "T", "F", "S", "S"]
+        for h_row in range(4):
+            hy = habits_start_y - 8.5 * mm - h_row * 5.5 * mm
+            
+            # Длинная линия для текста (теперь много места!)
+            c.setStrokeColor(HexColor("#EAE5DE"))
+            c.setLineWidth(0.4)
+            c.line(margin_x + 6 * mm, hy + 1.5 * mm, circles_start_x - 2 * mm, hy + 1.5 * mm)
+            
+            # Кружочки сгруппированы справа
+            for d_i in range(7):
+                cx = circles_start_x + d_i * h_cell_w + h_cell_w/2
+                c.setFillColor(HexColor("#FFFFFF"))
+                c.setStrokeColor(HexColor("#D8D0C5"))
+                c.circle(cx, hy + 2 * mm, 1.8 * mm, fill=1, stroke=1)
+
+        # Блок: Brain Dump
+        brain_y = habits_start_y - 34 * mm
+        c.setFont("Montserrat-Bold", 7)
+        c.setFillColor(DARK_BROWN)
+        c.drawString(margin_x + 6 * mm, brain_y, "💡 BRAIN DUMP")
+        
+        b_line_y = brain_y - 5.5 * mm
+        while b_line_y > bottom_margin + 5 * mm:
+            c.setStrokeColor(HexColor("#EAE5DE"))
+            c.line(margin_x + 6 * mm, b_line_y, margin_x + left_w - 6 * mm, b_line_y)
+            b_line_y -= 5.5 * mm
+
+
+        # 2. Правая зона (7 дней + 2 блока в сетке 3х3 = 9 карточек)
+        days_cols, days_rows = 3, 3
+        d_box_w = (right_w - (days_cols - 1) * gap) / days_cols
+        d_box_h = (available_h - (days_rows - 1) * gap) / days_rows
+        
+        for i in range(7):
+            current_day = first_day_of_week + datetime.timedelta(days=i)
+            day_label = current_day.strftime("%A").upper()
+            date_label = current_day.strftime("%b %d")
+            
+            col = i % days_cols
+            row = i // days_cols
+            
+            dx = margin_x + left_w + gap + col * (d_box_w + gap)
+            dy = bottom_margin + available_h - (row + 1) * d_box_h - row * gap
+            
+            c.setFillColor(SHADOW_COLOR)
+            c.roundRect(dx + 1 * mm, dy - 1 * mm, d_box_w, d_box_h, 2.5 * mm, fill=1, stroke=0)
+            c.setFillColor(BOX_BG_COLOR)
+            c.setStrokeColor(HexColor("#D8D0C5"))
+            c.roundRect(dx, dy, d_box_w, d_box_h, 2.5 * mm, fill=1, stroke=1)
+            
+            c.setFillColor(DARK_BROWN)
+            c.setFont("Montserrat-Bold", 8)
+            c.drawString(dx + 6 * mm, dy + d_box_h - 8 * mm, day_label)
+            
+            c.setFont("Montserrat", 7.5)
+            c.setFillColor(HexColor("#8C8377"))
+            date_w = c.stringWidth(date_label, "Montserrat", 7.5)
+            c.drawString(dx + d_box_w - 6 * mm - date_w, dy + d_box_h - 8 * mm, date_label)
+            
+            c.setStrokeColor(HexColor("#EAE5DE"))
+            c.setLineWidth(0.4)
+            c.line(dx + 6 * mm, dy + d_box_h - 10.5 * mm, dx + d_box_w - 6 * mm, dy + d_box_h - 10.5 * mm)
+            
+            focus_y = dy + d_box_h - 16 * mm
+            c.setFont("Montserrat-Bold", 6.5)
+            c.setFillColor(HexColor("#E07A5F"))
+            c.drawString(dx + 6 * mm, focus_y, "★ #1 FOCUS:")
+            c.setStrokeColor(HexColor("#EAE5DE"))
+            c.line(dx + 26 * mm, focus_y + 1 * mm, dx + d_box_w - 6 * mm, focus_y + 1 * mm)
+            
+            line_y = focus_y - 6.5 * mm
+            while line_y > dy + 4 * mm:
+                c.setStrokeColor(HexColor("#EAE5DE"))
+                c.line(dx + 6 * mm, line_y, dx + d_box_w - 6 * mm, line_y)
+                line_y -= 6.5 * mm
                 
-            for d_idx, day_char in enumerate(day_letters):
-                cx = circles_start_x + d_idx * (circle_radius * 2 + days_gap) + circle_radius
-                c.drawCentredString(cx, letters_y, day_char)
+            if current_day.year == YEAR:
+                target_day = f"DAY_{current_day.strftime('%Y-%m-%d')}"
+                c.linkAbsolute(target_day, target_day, (dx + d_box_w - 18 * mm, dy + d_box_h - 12 * mm, dx + d_box_w, dy + d_box_h))
+
+        # 8-й блок: Weekly Reflection
+        empty_idx_1 = 7
+        col1 = empty_idx_1 % days_cols
+        row1 = empty_idx_1 // days_cols
+        dx1 = margin_x + left_w + gap + col1 * (d_box_w + gap)
+        dy1 = bottom_margin + available_h - (row1 + 1) * d_box_h - row1 * gap
+        
+        c.setFillColor(SHADOW_COLOR)
+        c.roundRect(dx1 + 1 * mm, dy1 - 1 * mm, d_box_w, d_box_h, 2.5 * mm, fill=1, stroke=0)
+        c.setFillColor(BOX_BG_COLOR)
+        c.setStrokeColor(HexColor("#D8D0C5"))
+        c.roundRect(dx1, dy1, d_box_w, d_box_h, 2.5 * mm, fill=1, stroke=1)
+        
+        c.setFillColor(DARK_BROWN)
+        c.setFont("Montserrat-Bold", 8)
+        c.drawString(dx1 + 6 * mm, dy1 + d_box_h - 8 * mm, "WEEKLY REFLECTION")
+        c.setStrokeColor(HexColor("#EAE5DE"))
+        c.line(dx1 + 6 * mm, dy1 + d_box_h - 10.5 * mm, dx1 + d_box_w - 6 * mm, dy1 + d_box_h - 10.5 * mm)
+        
+        ly = dy1 + d_box_h - 16 * mm
+        while ly > dy1 + 4 * mm:
+            c.line(dx1 + 6 * mm, ly, dx1 + d_box_w - 6 * mm, ly)
+            ly -= 6.5 * mm
+
+        # 9-й блок: ИДЕАЛЬНО ЗАКРЫВАЕМ СЕТКУ (NEXT WEEK)
+        empty_idx_2 = 8
+        col2 = empty_idx_2 % days_cols
+        row2 = empty_idx_2 // days_cols
+        dx2 = margin_x + left_w + gap + col2 * (d_box_w + gap)
+        dy2 = bottom_margin + available_h - (row2 + 1) * d_box_h - row2 * gap
+        
+        c.setFillColor(SHADOW_COLOR)
+        c.roundRect(dx2 + 1 * mm, dy2 - 1 * mm, d_box_w, d_box_h, 2.5 * mm, fill=1, stroke=0)
+        c.setFillColor(BOX_BG_COLOR)
+        c.setStrokeColor(HexColor("#D8D0C5"))
+        c.roundRect(dx2, dy2, d_box_w, d_box_h, 2.5 * mm, fill=1, stroke=1)
+        
+        c.setFillColor(DARK_BROWN)
+        c.setFont("Montserrat-Bold", 8)
+        c.drawString(dx2 + 6 * mm, dy2 + d_box_h - 8 * mm, "NEXT WEEK")
+        c.setStrokeColor(HexColor("#EAE5DE"))
+        c.line(dx2 + 6 * mm, dy2 + d_box_h - 10.5 * mm, dx2 + d_box_w - 6 * mm, dy2 + d_box_h - 10.5 * mm)
+        
+        ly2 = dy2 + d_box_h - 16 * mm
+        while ly2 > dy2 + 4 * mm:
+            c.line(dx2 + 6 * mm, ly2, dx2 + d_box_w - 6 * mm, ly2)
+            ly2 -= 6.5 * mm
+
+    else:
+        # === ВЕРТИКАЛЬНЫЙ WEEKLY DASHBOARD ===
+        # (Остается как был, так как там используется сетка 2х4 = ровно 8 ячеек без пустых углов)
+        top_panel_h = available_h * 0.18
+        days_area_h = available_h - top_panel_h - gap
+        
+        c.setFillColor(BOX_BG_COLOR)
+        c.setStrokeColor(HexColor("#D8D0C5"))
+        c.roundRect(margin_x, bottom_margin + days_area_h + gap, main_area_w, top_panel_h, 2.5 * mm, fill=1, stroke=1)
+        
+        c.setFillColor(DARK_BROWN)
+        c.setFont("Montserrat-Bold", 8)
+        c.drawString(margin_x + 6 * mm, bottom_margin + available_h - 7 * mm, "THIS WEEK'S TOP 3 & HABITS")
+
+        h_cell_w = (main_area_w - 45 * mm) / 7
+        for d_i, d_char in enumerate(day_letters):
+            c.setFont("Montserrat-Bold", 5.5)
+            c.setFillColor(HexColor("#A89F91"))
+            c.drawCentredString(margin_x + 40 * mm + d_i * h_cell_w + h_cell_w/2, bottom_margin + available_h - 7 * mm, d_char)
+
+        d_cols, d_rows = 2, 4
+        d_w = (main_area_w - gap) / 2
+        d_h = (days_area_h - 3 * gap) / 4
+        
+        for i in range(7):
+            current_day = first_day_of_week + datetime.timedelta(days=i)
+            day_label = current_day.strftime("%A").upper()
+            date_label = current_day.strftime("%b %d")
+            
+            col = i % 2
+            row = i // 2
+            dx = margin_x + col * (d_w + gap)
+            dy = bottom_margin + days_area_h - (row + 1) * d_h - row * gap
+            
+            c.setFillColor(BOX_BG_COLOR)
+            c.setStrokeColor(HexColor("#D8D0C5"))
+            c.roundRect(dx, dy, d_w, d_h, 2 * mm, fill=1, stroke=1)
+            
+            c.setFillColor(DARK_BROWN)
+            c.setFont("Montserrat-Bold", 7.5)
+            c.drawString(dx + 5 * mm, dy + d_h - 6 * mm, day_label)
+            c.setFont("Montserrat", 7.5)
+            c.setFillColor(HexColor("#8C8377"))
+            dw = c.stringWidth(date_label, "Montserrat", 7.5)
+            c.drawString(dx + d_w - 5 * mm - dw, dy + d_h - 6 * mm, date_label)
+            
+            c.setStrokeColor(HexColor("#EAE5DE"))
+            c.line(dx + 5 * mm, dy + d_h - 8 * mm, dx + d_w - 5 * mm, dy + d_h - 8 * mm)
+            
+            ly = dy + d_h - 13 * mm
+            while ly > dy + 2 * mm:
+                c.setStrokeColor(HexColor("#EAE5DE"))
+                c.line(dx + 5 * mm, ly, dx + d_w - 5 * mm, ly)
+                ly -= 6 * mm
 
     c.showPage()
 
@@ -999,22 +1197,117 @@ def create_placeholder_page(c, width, height, name):
     c.drawCentredString(width / 2, height / 2, f"{name} PAGE DESTINATION")
     c.showPage()
 
-def draw_box_with_lines(c, x, y, w, h, title, lines):
-    """Вспомогательная функция для отрисовки блоков с линиями для записей."""
-    c.setFillColor(HexColor("#FFFFFF"))
+# --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ BENTO-ДНЯ ---
+def draw_bento_base(c, x, y, w, h, title="", title_color=None):
+    """Базовая Bento-карточка с умной тенью и заголовком."""
+    c.setFillColor(SHADOW_COLOR)
+    c.roundRect(x + 1 * mm, y - 1 * mm, w, h, 2.5 * mm, fill=1, stroke=0)
+    c.setFillColor(BOX_BG_COLOR)
     c.setStrokeColor(HexColor("#D8D0C5"))
-    c.roundRect(x, y, w, h, 2 * mm, fill=1, stroke=1)
-    
-    c.setFillColor(DARK_BROWN)
-    c.setFont("Montserrat-Bold", 9)
-    c.drawString(x + 5 * mm, y + h - 7 * mm, title)
-    
-    line_spacing = (h - 12 * mm) / lines
     c.setLineWidth(0.5)
+    c.roundRect(x, y, w, h, 2.5 * mm, fill=1, stroke=1)
+    
+    if title:
+        c.setFillColor(title_color if title_color else DARK_BROWN)
+        c.setFont("Montserrat-Bold", 8)
+        c.drawString(x + 5 * mm, y + h - 8 * mm, title)
+        c.setStrokeColor(HexColor("#EAE5DE"))
+        c.line(x + 5 * mm, y + h - 10.5 * mm, x + w - 5 * mm, y + h - 10.5 * mm)
+
+def draw_bento_lines(c, x, y, w, h, title="", line_gap=6.5 * mm):
+    """Карточка с линиями для записей."""
+    draw_bento_base(c, x, y, w, h, title)
+    ly = y + h - 16 * mm
     c.setStrokeColor(HexColor("#EAE5DE"))
-    for i in range(lines):
-        line_y = y + h - 12 * mm - i * line_spacing
-        c.line(x + 5 * mm, line_y, x + w - 5 * mm, line_y)
+    c.setLineWidth(0.4)
+    while ly > y + 4 * mm:
+        c.line(x + 5 * mm, ly, x + w - 5 * mm, ly)
+        ly -= line_gap
+
+def draw_bento_time_blocks(c, x, y, w, h):
+    """Блок расписания."""
+    draw_bento_base(c, x, y, w, h, "TIME BLOCKS")
+    hours = ["6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 PM",
+             "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM"]
+    available_h = h - 14 * mm
+    line_spacing = available_h / len(hours)
+    
+    c.setLineWidth(0.4)
+    for i, hour_str in enumerate(hours):
+        line_y = y + h - 12 * mm - (i + 1) * line_spacing
+        c.setFont("Montserrat-Bold", 6)
+        c.setFillColor(HexColor("#A89F91"))
+        c.drawString(x + 4 * mm, line_y + 1.5 * mm, hour_str)
+        c.setStrokeColor(HexColor("#EAE5DE"))
+        c.line(x + 14 * mm, line_y, x + w - 4 * mm, line_y)
+
+def draw_bento_trackers(c, x, y, w, h):
+    """Умный трекер состояний с компактными и безопасными отступами."""
+    draw_bento_base(c, x, y, w, h)
+    
+    col_w = w / 3
+    
+    # 1. Energy (Battery)
+    c.setFillColor(DARK_BROWN)
+    c.setFont("Montserrat-Bold", 7)
+    c.drawString(x + 4 * mm, y + h / 2 - 2.5 * mm, "ENERGY:")
+    for i in range(5):
+        bx = x + 19 * mm + i * 3.8 * mm
+        c.setFillColor(BOX_BG_COLOR)
+        c.setStrokeColor(HexColor("#E07A5F")) 
+        c.roundRect(bx, y + h / 2 - 3.5 * mm, 2.2 * mm, 4 * mm, 0.5 * mm, fill=1, stroke=1)
+        
+    # 2. Water
+    c.setFillColor(DARK_BROWN)
+    c.drawString(x + col_w + 1 * mm, y + h / 2 - 2.5 * mm, "WATER:")
+    for i in range(8):
+        wx = x + col_w + 15 * mm + i * 3.3 * mm
+        c.setFillColor(BOX_BG_COLOR)
+        c.setStrokeColor(HexColor("#81B29A")) 
+        c.circle(wx, y + h / 2 - 1.5 * mm, 1.4 * mm, fill=1, stroke=1)
+        
+    # 3. Mood (Сдвинули левее и уплотнили кружки)
+    c.setFillColor(DARK_BROWN)
+    c.drawString(x + 2 * col_w + 1 * mm, y + h / 2 - 2.5 * mm, "MOOD:")
+    for i in range(5):
+        mx = x + 2 * col_w + 14 * mm + i * 4 * mm
+        c.setFillColor(BOX_BG_COLOR)
+        c.setStrokeColor(HexColor("#E5B299")) 
+        c.circle(mx, y + h / 2 - 1.5 * mm, 1.6 * mm, fill=1, stroke=1)
+
+def draw_must_do_box(c, x, y, w, h):
+    """Ограниченный список главных задач без подчеркивания заголовка и с максимальным отступом."""
+    # Вызываем базу БЕЗ заголовка, чтобы отключить автоматическую линию
+    draw_bento_base(c, x, y, w, h)
+    
+    # 1. Рисуем заголовок вручную, поднимая его выше (отступ 6.5 mm вместо 8 mm)
+    c.setFillColor(DARK_BROWN)
+    c.setFont("Montserrat-Bold", 8)
+    c.drawString(x + 5 * mm, y + h - 6.5 * mm, "MUST DO (TOP 3 PRIORITIES)")
+    
+    # 2. Вычисляем координаты для трех строк (освободили максимум места)
+    start_y = y + h - 13.5 * mm  # Первая строка начинается выше
+    end_y = y + 5 * mm           # Третья строка опускается ниже
+    
+    gap = (start_y - end_y) / 2
+    
+    for i in range(3):
+        cy = start_y - i * gap
+        
+        # Контурные кружки
+        c.setFillColor(BOX_BG_COLOR)
+        c.setStrokeColor(DARK_BROWN)
+        c.setLineWidth(1)
+        c.circle(x + 6.5 * mm, cy + 1.2 * mm, 2.2 * mm, fill=1, stroke=1)
+        
+        c.setFillColor(DARK_BROWN)
+        c.setFont("Montserrat-Bold", 6)
+        c.drawCentredString(x + 6.5 * mm, cy + 0.2 * mm, str(i+1))
+        
+        # Линия для записи
+        c.setStrokeColor(HexColor("#EAE5DE"))
+        c.setLineWidth(0.4)
+        c.line(x + 11.5 * mm, cy, x + w - 5 * mm, cy)
 
 def draw_box_with_lines(c, x, y, w, h, title):
     """Отрисовка блоков с фиксированным одинаковым расстоянием между линиями."""
@@ -1029,194 +1322,189 @@ def draw_box_with_lines(c, x, y, w, h, title):
     c.setLineWidth(0.5)
     c.setStrokeColor(HexColor("#EAE5DE"))
     
-    # Фиксированное расстояние между линиями для всех блоков (7 мм)
     line_spacing = 7 * mm 
-    
-    # Первая линия начинается под заголовком
     current_y = y + h - 12.5 * mm 
     
-    # Рисуем линии, пока не достигнем нижнего края рамки (оставляя отступ 2 мм)
     while current_y > y + 2 * mm:
         c.line(x + 5 * mm, current_y, x + w - 5 * mm, current_y)
         current_y -= line_spacing
 
-def draw_water_tracker(c, x, y, w, h):
-    """Отрисовка трекера воды без рамки."""
-    c.setFillColor(DARK_BROWN)
-    c.setFont("Montserrat-Bold", 8)
-    c.drawString(x, y + h / 2 - 1 * mm, "WATER")
-    
-    start_x = x + 15 * mm
-    for i in range(8):
-        cx = start_x + i * 6 * mm
-        cy = y + h / 2 + 1 * mm
-        c.setStrokeColor(ACCENT_GREEN) 
-        c.setFillColor(BOX_BG_COLOR) # Кружочки залиты цветом ячеек
-        c.circle(cx, cy, 2 * mm, fill=1, stroke=1)
 
-def draw_mood_tracker(c, x, y, w, h):
-    """Отрисовка трекера настроения без рамки."""
-    c.setFillColor(DARK_BROWN)
-    c.setFont("Montserrat-Bold", 8)
-    c.drawString(x, y + h / 2 - 1 * mm, "MOOD")
-    
-    start_x = x + 15 * mm
-    for i in range(5):
-        cx = start_x + i * 8 * mm
-        cy = y + h / 2 + 1 * mm
-        c.setStrokeColor(ACCENT_PINK)
-        c.setFillColor(BOX_BG_COLOR)
-        c.circle(cx, cy, 2.5 * mm, fill=1, stroke=1)
-
-def draw_time_blocks_box(c, x, y, w, h, title="TIME BLOCKS"):
-    """Блок расписания с американской шкалой 6 AM - 10 PM."""
+# --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ BENTO-ДНЯ ---
+def draw_bento_base(c, x, y, w, h, title="", title_color=None):
+    """Базовая Bento-карточка с умной тенью и заголовком."""
+    c.setFillColor(SHADOW_COLOR)
+    c.roundRect(x + 1 * mm, y - 1 * mm, w, h, 2.5 * mm, fill=1, stroke=0)
     c.setFillColor(BOX_BG_COLOR)
     c.setStrokeColor(HexColor("#D8D0C5"))
-    c.roundRect(x, y, w, h, 2 * mm, fill=1, stroke=1)
+    c.setLineWidth(0.5)
+    c.roundRect(x, y, w, h, 2.5 * mm, fill=1, stroke=1)
     
-    c.setFillColor(DARK_BROWN)
-    c.setFont("Montserrat-Bold", 9)
-    c.drawString(x + 5 * mm, y + h - 7 * mm, title)
-    
+    if title:
+        c.setFillColor(title_color if title_color else DARK_BROWN)
+        c.setFont("Montserrat-Bold", 8)
+        c.drawString(x + 5 * mm, y + h - 8 * mm, title)
+        c.setStrokeColor(HexColor("#EAE5DE"))
+        c.line(x + 5 * mm, y + h - 10.5 * mm, x + w - 5 * mm, y + h - 10.5 * mm)
+
+def draw_bento_lines(c, x, y, w, h, title="", line_gap=6.5 * mm):
+    """Карточка с линиями для записей."""
+    draw_bento_base(c, x, y, w, h, title)
+    ly = y + h - 16 * mm
+    c.setStrokeColor(HexColor("#EAE5DE"))
+    c.setLineWidth(0.4)
+    while ly > y + 4 * mm:
+        c.line(x + 5 * mm, ly, x + w - 5 * mm, ly)
+        ly -= line_gap
+
+def draw_bento_time_blocks(c, x, y, w, h):
+    """Блок расписания."""
+    draw_bento_base(c, x, y, w, h, "TIME BLOCKS")
     hours = ["6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 PM",
              "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM"]
-    
     available_h = h - 14 * mm
     line_spacing = available_h / len(hours)
     
-    c.setLineWidth(0.5)
+    c.setLineWidth(0.4)
     for i, hour_str in enumerate(hours):
         line_y = y + h - 12 * mm - (i + 1) * line_spacing
-        
-        # Время
-        c.setFont("Montserrat-Bold", 6.5)
+        c.setFont("Montserrat-Bold", 6)
         c.setFillColor(HexColor("#A89F91"))
         c.drawString(x + 4 * mm, line_y + 1.5 * mm, hour_str)
-        
-        # Линия
         c.setStrokeColor(HexColor("#EAE5DE"))
         c.line(x + 14 * mm, line_y, x + w - 4 * mm, line_y)
 
-def draw_priorities_box(c, x, y, w, h, title="TOP PRIORITIES"):
-    """Блок топ-приоритетов с чекбоксами-цифрами 1, 2, 3."""
-    c.setFillColor(BOX_BG_COLOR)
-    c.setStrokeColor(HexColor("#D8D0C5"))
-    c.roundRect(x, y, w, h, 2 * mm, fill=1, stroke=1)
-    
-    c.setFillColor(DARK_BROWN)
-    c.setFont("Montserrat-Bold", 9)
-    c.drawString(x + 5 * mm, y + h - 7 * mm, title)
-    
-    num_items = 3
-    available_h = h - 10 * mm
-    line_spacing = available_h / num_items
-    
-    for i in range(num_items):
-        line_y = y + h - 10 * mm - (i + 1) * line_spacing + 3 * mm
-        
-        # Кружок с цифрой
-        c.setFillColor(ACCENT_PINK) # Мягкий розовый цвет
-        c.circle(x + 8 * mm, line_y + 1.5 * mm, 3 * mm, fill=1, stroke=0)
-        
-        c.setFillColor(DARK_BROWN)
-        c.setFont("Montserrat-Bold", 7)
-        c.drawCentredString(x + 8 * mm, line_y + 0.3 * mm, str(i + 1))
-        
-        # Линия
-        c.setLineWidth(0.5)
-        c.setStrokeColor(HexColor("#EAE5DE"))
-        c.line(x + 14 * mm, line_y, x + w - 5 * mm, line_y)
 
+# --- ОБНОВЛЕННАЯ СТРАНИЦА ДНЯ ---
 def create_daily_page(c, width, height, is_landscape, current_date):
     day_str = current_date.strftime('%Y-%m-%d')
     page_name = f"DAY_{day_str}"
-    active_month = RIGHT_TABS[current_date.month]
+    active_month = RIGHT_TABS[current_date.month] if 1 <= current_date.month <= 12 else "JAN"
     
     draw_base_page(c, width, height, active_right=active_month, page_name=page_name)
     
     margin_x = 15 * mm
     main_area_w = width - margin_x - (25 * mm if is_landscape else 20 * mm)
-    content_y = height - 25 * mm
     
-    c.setFillColor(DARK_BROWN)
-    c.setFont("Playfair-Bold", 19) 
-    c.drawString(margin_x, content_y, current_date.strftime('%A, %B %d, %Y').upper())
-    
-    c.setFont("Montserrat-Bold", 7)
-    
-    # ← BACK TO MONTH
-    c.drawString(margin_x, content_y + 8 * mm, f"← BACK TO {active_month}")
-    c.linkAbsolute(f"MONTH_{active_month}", f"MONTH_{active_month}", (margin_x, content_y + 6 * mm, margin_x + 30 * mm, content_y + 12 * mm))
-    
-    # WEEK X →
-    iso_year, week_num, _ = current_date.isocalendar()
-    week_target = f"WEEK_{iso_year}_{week_num}"
-    week_text = f"WEEK {week_num} →"
-    text_w = c.stringWidth(week_text, "Montserrat-Bold", 7)
-    c.drawString(margin_x + 35 * mm, content_y + 8 * mm, week_text)
-    c.linkAbsolute(week_target, week_target, (margin_x + 35 * mm, content_y + 6 * mm, margin_x + 35 * mm + text_w, content_y + 12 * mm))
-
-    content_y -= 10 * mm
-    gap = 5 * mm
+    # Опустили весь контент ниже (с 25 мм на 32 мм), чтобы дать больше воздуха
+    content_y = height - 32 * mm 
     bottom_margin = 15 * mm
     
+    # --- НАВИГАЦИОННЫЕ КНОПКИ (Pill Buttons) ---
+    nav_y = content_y + 11 * mm 
+    btn_h = 6 * mm
+    
+    def draw_nav_btn(c, x, y, text, bg_color, text_color, target, is_accent=False):
+        c.setFont("Montserrat-Bold", 6.5)
+        tw = c.stringWidth(text, "Montserrat-Bold", 6.5)
+        bw = tw + 8 * mm # Добавляем отступы по краям кнопки
+        
+        # Мягкая тень кнопки
+        c.setFillColor(SHADOW_COLOR)
+        c.roundRect(x + 0.8 * mm, y - 0.8 * mm, bw, btn_h, btn_h/2, fill=1, stroke=0)
+        
+        # Основа кнопки
+        c.setFillColor(bg_color)
+        if is_accent:
+            c.setStrokeColor(bg_color)
+        else:
+            c.setStrokeColor(HexColor("#D8D0C5"))
+        c.roundRect(x, y, bw, btn_h, btn_h/2, fill=1, stroke=1)
+        
+        # Текст
+        c.setFillColor(text_color)
+        c.drawCentredString(x + bw/2, y + 1.8 * mm, text)
+        
+        # Невидимая ссылка
+        c.linkAbsolute(target, target, (x, y, x + bw, y + btn_h))
+        return x + bw + 3 * mm # Возвращаем координату X для следующей кнопки
+
+    # 1. Кнопка Месяца
+    month_str = f"← {active_month} OVERVIEW"
+    next_x = draw_nav_btn(c, margin_x, nav_y, month_str, BOX_BG_COLOR, DARK_BROWN, f"MONTH_{active_month}")
+    
+    # 2. Кнопка Недели
+    iso_year, week_num, _ = current_date.isocalendar()
+    week_target = f"WEEK_{iso_year}_{week_num}"
+    week_str = f"WEEK {week_num} DASHBOARD →"
+    next_x = draw_nav_btn(c, next_x, nav_y, week_str, BOX_BG_COLOR, DARK_BROWN, week_target)
+
+    # 3. Кнопка Dopamine Menu (Акцентная)
+    menu_str = "⚡ DOPAMINE MENU"
+    draw_nav_btn(c, next_x, nav_y, menu_str, HexColor("#E07A5F"), HexColor("#FFFFFF"), "DOPAMINE MENU", is_accent=True)
+
+    # --- ЗАГОЛОВОК ДНЯ ---
+    c.setFillColor(DARK_BROWN)
+    c.setFont("Playfair-Bold", 22)
+    day_name = current_date.strftime('%A')
+    date_rest = current_date.strftime('%B %d, %Y')
+    c.drawString(margin_x, content_y, f"{day_name}, {date_rest}".upper())
+    
+    content_y -= 8 * mm
+    available_h = content_y - bottom_margin
+    gap = 4 * mm
+
+    # ==================================
+    
     if is_landscape:
+        # 2 колонки
         col_w = (main_area_w - gap) / 2
         col1_x = margin_x
         col2_x = margin_x + col_w + gap
         
-        # ЛЕВАЯ КОЛОНКА: Расписание
-        draw_time_blocks_box(c, col1_x, bottom_margin, col_w, content_y - bottom_margin, "TIME BLOCKS")
+        # Левая колонка (Расписание и Трекеры)
+        trackers_h = 10 * mm
+        time_h = available_h - trackers_h - gap
         
-        # ПРАВАЯ КОЛОНКА
-        goal_h = 15 * mm
-        draw_box_with_lines(c, col2_x, content_y - goal_h, col_w, goal_h, "MAIN GOAL")
+        draw_bento_trackers(c, col1_x, content_y - trackers_h, col_w, trackers_h)
+        draw_bento_time_blocks(c, col1_x, bottom_margin, col_w, time_h)
         
-        # Трекеры
-        trackers_y = content_y - goal_h - gap - 8 * mm
-        draw_water_tracker(c, col2_x, trackers_y, col_w / 2 - gap/2, 8 * mm)
-        draw_mood_tracker(c, col2_x + col_w / 2 + gap/2, trackers_y, col_w / 2 - gap/2, 8 * mm)
+        # Правая колонка (Фокус, Списки задач и Заметки)
+        focus_h = 14 * mm
+        must_do_h = 28 * mm
         
-        priorities_y = trackers_y - gap - 35 * mm
-        draw_priorities_box(c, col2_x, priorities_y, col_w, 35 * mm, "TOP PRIORITIES")
+        y_cursor = content_y
+        draw_bento_lines(c, col2_x, y_cursor - focus_h, col_w, focus_h, "★ MAIN FOCUS FOR TODAY")
+        y_cursor -= (focus_h + gap)
         
-        y_cursor = priorities_y - gap
+        draw_must_do_box(c, col2_x, y_cursor - must_do_h, col_w, must_do_h)
+        y_cursor -= (must_do_h + gap)
+        
         remaining_h = y_cursor - bottom_margin
+        could_do_h = remaining_h * 0.55
+        brain_dump_h = remaining_h - could_do_h - gap
         
-        todo_h = (remaining_h - gap) * 0.6
-        notes_h = (remaining_h - gap) * 0.4
+        draw_bento_lines(c, col2_x, y_cursor - could_do_h, col_w, could_do_h, "IF I HAVE ENERGY (COULD DO)")
+        y_cursor -= (could_do_h + gap)
         
-        draw_box_with_lines(c, col2_x, bottom_margin + notes_h + gap, col_w, todo_h, "TO-DO LIST")
-        draw_box_with_lines(c, col2_x, bottom_margin, col_w, notes_h, "NOTES")
+        draw_bento_lines(c, col2_x, bottom_margin, col_w, brain_dump_h, "BRAIN DUMP & NOTES")
         
     else:
-        # ВЕРТИКАЛЬНАЯ ВЕРСИЯ
-        goal_h = 15 * mm
-        draw_box_with_lines(c, margin_x, content_y - goal_h, main_area_w, goal_h, "MAIN GOAL FOR TODAY")
+        # Вертикальная версия
+        trackers_h = 10 * mm
+        focus_h = 14 * mm
+        must_do_h = 28 * mm
         
-        trackers_y = content_y - goal_h - gap - 8 * mm
-        draw_water_tracker(c, margin_x, trackers_y, main_area_w / 2 - gap/2, 8 * mm)
-        draw_mood_tracker(c, margin_x + main_area_w / 2 + gap/2, trackers_y, main_area_w / 2 - gap/2, 8 * mm)
+        y_cursor = content_y
+        draw_bento_trackers(c, margin_x, y_cursor - trackers_h, main_area_w, trackers_h)
+        y_cursor -= (trackers_h + gap)
         
-        priorities_h = 35 * mm
-        priorities_y = trackers_y - gap - priorities_h
-        draw_priorities_box(c, margin_x, priorities_y, main_area_w, priorities_h, "TOP PRIORITIES")
+        draw_bento_lines(c, margin_x, y_cursor - focus_h, main_area_w, focus_h, "★ MAIN FOCUS FOR TODAY")
+        y_cursor -= (focus_h + gap)
+        
+        draw_must_do_box(c, margin_x, y_cursor - must_do_h, main_area_w, must_do_h)
+        y_cursor -= (must_do_h + gap)
         
         col_w = (main_area_w - gap) / 2
-        
-        y_cursor = priorities_y - gap
         remaining_h = y_cursor - bottom_margin
         
-        time_h = remaining_h
-        todo_h = (remaining_h - gap) * 0.6
-        notes_h = (remaining_h - gap) * 0.4
+        draw_bento_time_blocks(c, margin_x, bottom_margin, col_w, remaining_h)
         
-        # Time Blocks слева
-        draw_time_blocks_box(c, margin_x, bottom_margin, col_w, time_h, "TIME BLOCKS")
+        could_do_h = remaining_h * 0.6
+        notes_h = remaining_h - could_do_h - gap
         
-        # To-Do и Notes справа
-        draw_box_with_lines(c, margin_x + col_w + gap, bottom_margin + notes_h + gap, col_w, todo_h, "TO-DO LIST")
-        draw_box_with_lines(c, margin_x + col_w + gap, bottom_margin, col_w, notes_h, "NOTES")
+        draw_bento_lines(c, margin_x + col_w + gap, bottom_margin + notes_h + gap, col_w, could_do_h, "IF I HAVE ENERGY (COULD DO)")
+        draw_bento_lines(c, margin_x + col_w + gap, bottom_margin, col_w, notes_h, "BRAIN DUMP & NOTES")
         
     c.showPage()
 
@@ -1391,7 +1679,7 @@ def create_stickers_page(c, width, height, is_landscape):
         draw_shadow(x, y, w, h)
         c.setFillColor(WHITE)
         c.rect(x, y, w, h, fill=1, stroke=0)
-        c.setFillColor(HexColor("#EAE5DE"))
+        c.setFillColor(SHADOW_COLOR)
         c.rect(x + 2.5 * mm, y + 7 * mm, w - 5 * mm, h - 9.5 * mm, fill=1, stroke=0)
         c.setFillColor(B_MUSTARD)
         c.rect(x + w / 2 - 5 * mm, y + h - 5 * mm, 10 * mm, 4 * mm, fill=1, stroke=0)
@@ -2017,7 +2305,6 @@ def create_habits_page(c, width, height, is_landscape, month_num):
             
     c.showPage()
 
-
 def create_habits_page(c, width, height, is_landscape, month_num):
     month_name = RIGHT_TABS[month_num]
     page_name = f"HABITS_{month_name}"
@@ -2244,7 +2531,6 @@ def create_money_page(c, width, height, is_landscape, month_num):
         
     c.showPage()
 
-
 def draw_reset_box(c, x, y, w, h, title, subtitle, items):
     """Отрисовка блока еженедельной перезагрузки с чекбоксами."""
     c.setFillColor(BOX_BG_COLOR)
@@ -2367,8 +2653,6 @@ def create_weekly_reset_page(c, width, height, is_landscape):
         draw_reset_box(c, margin_x, bottom_margin, main_area_w, row_h, "3. CLEAR SCHEDULE", "Set boundaries and intentions for next week", schedule_items)
 
     c.showPage()
-
-
 
 def draw_habit_block(c, x, y, w, h):
     """Карточка привычки с трекером частоты (без привязки к датам)."""
@@ -2614,7 +2898,6 @@ def create_vision_page(c, width, height, is_landscape, active_tab="VISION"):
         
     c.showPage()
 
-
 def create_guide_page(c, width, height, is_landscape):
     draw_base_page(c, width, height, active_top="GUIDE", page_name="GUIDE")
     
@@ -2802,7 +3085,6 @@ def create_guide_page(c, width, height, is_landscape):
 
     c.showPage()
 
-
 def create_notes_pages(c, width, height, is_landscape, num_sets=3):
     """Генерирует раздел заметок (Линейка, Клетка, Точка, Пустые листы)."""
     from reportlab.lib.units import mm
@@ -2939,6 +3221,136 @@ def create_win_jar_page(c, width, height, is_landscape):
             
     c.showPage()
 
+def create_dopamine_menu_page(c, width, height, is_landscape):
+    """Секретная страница: Дофаминовое меню для ADHD-продуктивности."""
+    draw_base_page(c, width, height, active_top="GUIDE", page_name="DOPAMINE MENU")
+    
+    margin_x = 15 * mm
+    main_area_w = width - margin_x - (25 * mm if is_landscape else 20 * mm)
+    content_y = height - 25 * mm
+    bottom_margin = 15 * mm
+    
+    c.setFillColor(DARK_BROWN)
+    title_str = "DOPAMINE MENU"
+    c.setFont("Playfair-Bold", 24)
+    c.drawString(margin_x, content_y, title_str)
+    
+    title_w = c.stringWidth(title_str, "Playfair-Bold", 24)
+    c.setFont("Montserrat", 10)
+    c.setFillColor(HexColor("#A89F91"))
+    c.drawString(margin_x + title_w + 5 * mm, content_y + 2 * mm, "| Pick a healthy recharge instead of doom-scrolling")
+    
+    content_y -= 10 * mm
+    available_h = content_y - bottom_margin
+    gap = 5 * mm
+    
+    def draw_menu_box(bx, by, bw, bh, title, subtitle, items):
+        c.setFillColor(SHADOW_COLOR)
+        c.roundRect(bx + 1 * mm, by - 1 * mm, bw, bh, 2.5 * mm, fill=1, stroke=0)
+        c.setFillColor(BOX_BG_COLOR)
+        c.setStrokeColor(HexColor("#D8D0C5"))
+        c.setLineWidth(0.5)
+        c.roundRect(bx, by, bw, bh, 2.5 * mm, fill=1, stroke=1)
+        
+        c.setFillColor(DARK_BROWN)
+        c.setFont("Montserrat-Bold", 9)
+        c.drawString(bx + 5 * mm, by + bh - 8 * mm, title)
+        
+        tw = c.stringWidth(title, "Montserrat-Bold", 9)
+        c.setStrokeColor(HexColor("#EAE5DE"))
+        c.line(bx + 5 * mm + tw + 3 * mm, by + bh - 8 * mm, bx + bw - 5 * mm, by + bh - 8 * mm)
+        
+        c.setFont("Montserrat", 7.5)
+        c.setFillColor(HexColor("#8C8377"))
+        c.drawString(bx + 5 * mm, by + bh - 13 * mm, subtitle)
+        
+        ly = by + bh - 20 * mm
+        for item in items:
+            c.setFillColor(ACCENT_PINK)
+            c.circle(bx + 7 * mm, ly + 1 * mm, 1.5 * mm, fill=1, stroke=0)
+            c.setFillColor(DARK_BROWN)
+            c.setFont("Montserrat-Bold", 7.5)
+            c.drawString(bx + 11 * mm, ly - 1 * mm, item)
+            c.setStrokeColor(HexColor("#EAE5DE"))
+            c.line(bx + 11 * mm, ly - 3 * mm, bx + bw - 5 * mm, ly - 3 * mm)
+            ly -= 7 * mm
+            
+        while ly > by + 4 * mm:
+            c.setFillColor(HexColor("#D8D0C5"))
+            c.circle(bx + 7 * mm, ly + 1 * mm, 1.5 * mm, fill=1, stroke=0)
+            c.setStrokeColor(HexColor("#EAE5DE"))
+            c.line(bx + 11 * mm, ly - 3 * mm, bx + bw - 5 * mm, ly - 3 * mm)
+            ly -= 7 * mm
+
+    appetizers = ["Drink a glass of cold water", "Stretch for 5 minutes", "Listen to one upbeat song", "Step outside for fresh air"]
+    mains = ["Read a chapter of a book", "Go for a 30-minute walk", "Work on a hobby or craft", "Cook a nice meal"]
+    sides = ["Light a scented candle", "Play lo-fi background music", "Use a fidget toy", "Make a warm cup of tea"]
+    desserts = ["Watch one episode of a show", "Guilt-free social media (15 min)", "Eat a favorite treat", "Play a video game"]
+
+    if is_landscape:
+        col_w = (main_area_w - 2 * gap) / 3
+        half_h = (available_h - gap) / 2
+        
+        draw_menu_box(margin_x, bottom_margin + half_h + gap, col_w, half_h, "APPETIZERS (5-10 MIN)", "Quick dopamine boosts", appetizers)
+        draw_menu_box(margin_x, bottom_margin, col_w, half_h, "MAINS (30-60 MIN)", "Deep recharge activities", mains)
+        
+        draw_menu_box(margin_x + col_w + gap, bottom_margin + half_h + gap, col_w, half_h, "SIDES (PASSIVE)", "Boosts while working", sides)
+        draw_menu_box(margin_x + col_w + gap, bottom_margin, col_w, half_h, "DESSERTS (REWARDS)", "High dopamine treats", desserts)
+        
+        # CHEF'S SPECIALS (Blank box for user)
+        c.setFillColor(SHADOW_COLOR)
+        c.roundRect(margin_x + 2*col_w + 2*gap + 1 * mm, bottom_margin - 1 * mm, col_w, available_h, 2.5 * mm, fill=1, stroke=0)
+        c.setFillColor(BOX_BG_COLOR)
+        c.setStrokeColor(HexColor("#D8D0C5"))
+        c.roundRect(margin_x + 2*col_w + 2*gap, bottom_margin, col_w, available_h, 2.5 * mm, fill=1, stroke=1)
+        
+        bx = margin_x + 2*col_w + 2*gap
+        c.setFillColor(HexColor("#E07A5F"))
+        c.setFont("Montserrat-Bold", 9)
+        c.drawString(bx + 5 * mm, bottom_margin + available_h - 8 * mm, "★ CHEF'S SPECIALS (MY GO-TO)")
+        c.setStrokeColor(HexColor("#EAE5DE"))
+        c.line(bx + 5 * mm, bottom_margin + available_h - 10.5 * mm, bx + col_w - 5 * mm, bottom_margin + available_h - 10.5 * mm)
+        
+        ly = bottom_margin + available_h - 17 * mm
+        while ly > bottom_margin + 5 * mm:
+            c.line(bx + 5 * mm, ly, bx + col_w - 5 * mm, ly)
+            ly -= 7 * mm
+
+    else:
+        # Вертикальная версия
+        col_w = (main_area_w - gap) / 2
+        row_h = (available_h - 2 * gap) / 3
+        
+        draw_menu_box(margin_x, bottom_margin + 2*(row_h + gap), col_w, row_h, "APPETIZERS", "5-10 min quick boosts", appetizers)
+        draw_menu_box(margin_x + col_w + gap, bottom_margin + 2*(row_h + gap), col_w, row_h, "SIDES", "Passive boosts", sides)
+        
+        draw_menu_box(margin_x, bottom_margin + row_h + gap, col_w, row_h, "MAINS", "30-60 min deep recharge", mains)
+        draw_menu_box(margin_x + col_w + gap, bottom_margin + row_h + gap, col_w, row_h, "DESSERTS", "High dopamine treats", desserts)
+        
+        bx = margin_x
+        by = bottom_margin
+        bw = main_area_w
+        bh = row_h
+        
+        c.setFillColor(SHADOW_COLOR)
+        c.roundRect(bx + 1 * mm, by - 1 * mm, bw, bh, 2.5 * mm, fill=1, stroke=0)
+        c.setFillColor(BOX_BG_COLOR)
+        c.setStrokeColor(HexColor("#D8D0C5"))
+        c.roundRect(bx, by, bw, bh, 2.5 * mm, fill=1, stroke=1)
+        
+        c.setFillColor(HexColor("#E07A5F"))
+        c.setFont("Montserrat-Bold", 9)
+        c.drawString(bx + 5 * mm, by + bh - 8 * mm, "★ CHEF'S SPECIALS (MY GO-TO)")
+        c.setStrokeColor(HexColor("#EAE5DE"))
+        c.line(bx + 5 * mm, by + bh - 10.5 * mm, bx + bw - 5 * mm, by + bh - 10.5 * mm)
+        
+        ly = by + bh - 17 * mm
+        while ly > by + 5 * mm:
+            c.line(bx + 5 * mm, ly, bx + bw - 5 * mm, ly)
+            ly -= 7 * mm
+
+    c.showPage()
+
 
 def build_planner(filename, is_landscape=True, sunday_start=False):
     import os
@@ -2973,6 +3385,7 @@ def build_planner(filename, is_landscape=True, sunday_start=False):
     create_year_page(c, width, height, is_landscape, sunday_start) 
     create_brain_dump_page(c, width, height, is_landscape)
     create_done_list_page(c, width, height, is_landscape) 
+    create_dopamine_menu_page(c, width, height, is_landscape)
     create_focus_log_page(c, width, height, is_landscape)
     create_weekly_reset_page(c, width, height, is_landscape)
     
